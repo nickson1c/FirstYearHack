@@ -50,13 +50,15 @@ function buildDoorway(z,boundaryIndex){
   box('partition left',(-5+leftEdge)/2,2.5,z,leftEdge+5,5,.25,material);
   box('partition right',(5+rightEdge)/2,2.5,z,5-rightEdge,5,.25,material);
   box('partition lintel',openingX,4,z,openingWidth,2,.25,material);
-  const door=box(boundaryIndex===0?'exit door':`room door ${boundaryIndex}`,openingX,1.5,z,1.45,3,.12,darkWood,true);
+  const pivot=new THREE.Group();pivot.position.set(leftEdge,0,z);scene.add(pivot);
+  const door=new THREE.Mesh(new THREE.BoxGeometry(1.45,3,.12),darkWood);door.name=boundaryIndex===0?'exit door':`room door ${boundaryIndex}`;door.position.set(openingWidth/2,1.5,0);door.castShadow=true;door.receiveShadow=true;pivot.add(door);interactables.push(door);
+  if(boundaryIndex===0){const handle=new THREE.Mesh(new THREE.BoxGeometry(.055,.2,.09),brass);handle.name='door handle';handle.position.set(.48,-.02,.09);door.add(handle);}
+  else box('door handle',openingX-.55,1.48,z+.09,.06,.16,.06,brass);
   box('cyan door frame',openingX,3.02,z+.16,1.62,.05,.08,cyan);
   box('magenta door frame',openingX,3.02,z-.16,1.62,.05,.08,magenta);
-  box('door handle',openingX-.55,1.48,z+.09,.06,.16,.06,brass);
   if(boundaryIndex===0){box('room keypad',3.02,1.48,z+.22,.24,.82,.1,black,true);box('keypad display',3.02,1.75,z+.16,.16,.12,.025,cyan);for(let row=0;row<3;row++)for(let col=0;col<3;col++)box('keypad button',2.97+col*.05,1.55-row*.11,z+.14,.025,.025,.02,cream);}
   if(boundaryIndex===1){box('word lock',3.02,1.48,z+.22,.24,.82,.1,black,true);box('word lock display',3.02,1.75,z+.16,.16,.12,.025,magenta);for(let n=0;n<5;n++)box('word lock key',2.94+n*.04,1.48,z+.14,.025,.08,.02,cream);}
-  roomDoorObjects.push({mesh:door,boundary:z,from:boundaryIndex,to:boundaryIndex+1,isOpen:false});
+  roomDoorObjects.push({mesh:door,pivot,boundary:z,from:boundaryIndex,to:boundaryIndex+1,isOpen:false,targetAngle:0});
 }
 function addRoomSign(title,subtitle,accent,x,y,z){
   const art=document.createElement('canvas');art.width=768;art.height=256;const ctx=art.getContext('2d');
@@ -77,7 +79,7 @@ function makePickupMarker(text,color){
 }
 function makeGlyphSprite(glyph,color){const art=document.createElement('canvas');art.width=256;art.height=256;const ctx=art.getContext('2d');ctx.clearRect(0,0,256,256);ctx.shadowColor=color;ctx.shadowBlur=28;ctx.fillStyle=color;ctx.font='bold 174px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(glyph,128,132);const texture=new THREE.CanvasTexture(art);texture.colorSpace=THREE.SRGBColorSpace;const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:true}));sprite.scale.set(.78,.78,1);sprite.visible=false;scene.add(sprite);return sprite;}
 
-// A compact 1970s booth: warm practical light, dark walnut, dusty concrete, and a projector beam.
+// A compact listening studio with warm practical lights and walnut furniture.
 box('floor',0,-.12,0,10,.24,11,mat('#1b2635',.48,.34));
 box('left wall',-5,2.5,0,.25,5,11,wall); box('right wall',5,2.5,0,.25,5,11,wall);
 box('ceiling',0,5,0,10,.2,11,mat('#151c29'));
@@ -91,63 +93,56 @@ box('cyan wall strip',0,4.18,-5.28,8.1,.035,.045,cyan);box('magenta wall strip',
 box('cyan floor marker',0,.015,-4.95,8,.018,.06,cyan);
 box('room sign backing',-3.35,3.45,-5.3,2.75,1.02,.08,black);addRoomSign('MUSIC ROOM','01 / TURNTABLE + TAPE','#20dfff',-3.35,3.45,-5.24);
 buildDoorway(-5.5,0);
-// Projection window and door
-box('booth window',0,2.5,-5.31,2.8,1.7,.04,black);
-box('projection screen glow',0,2.5,-5.275,2.5,1.42,.015,mat('#9b7a51'));
-const screenGlow=new THREE.PointLight('#ddb77f',7,5,2);screenGlow.position.set(0,2.7,-4.4);scene.add(screenGlow);
+// A compact record rack replaces the old film projection setup.
+box('record rack top',2.15,.54,-4.72,2.35,.12,.68,wood);box('record rack base',2.15,.11,-4.72,2.35,.12,.68,darkWood);
+for(const x of [.99,3.31])box('record rack side',x,.33,-4.72,.09,.38,.62,darkWood);
+const sleeveColors=['#9b6048','#345f68','#956a96','#c18a54','#50775f','#7c5361'];
+for(let i=0;i<sleeveColors.length;i++){box('album sleeve',1.22+i*.34,.91,-4.77,.29,.65,.035,mat(sleeveColors[i],.72));box('album sleeve label',1.22+i*.34,.92,-4.748,.17,.24,.012,mat(i%2?'#e1c99b':'#d7d8cd'));}
 
 // Desk, drawer, desk lamp, mixer and turntable.
-box('desk top',-1.6,1.15,-2.1,3.25,.18,1.45,wood);box('desk front',-1.6,.76,-1.5,3.05,.68,.12,darkWood);
-for(const x of [-3,-.2])for(const z of [-2.62,-1.58])box('desk leg',x,.53,z,.14,1.05,.14,darkWood);
-const drawer=box('jammed drawer',-1.6,.92,-1.41,1.08,.37,.13,wood,true);const drawerFace=box('drawer face',-1.6,.92,-1.325,.98,.29,.025,darkWood);box('drawer pull',-1.6,.92,-1.28,.17,.035,.055,brass);
-const drawerKey=box('drawer key',-1.6,1.04,-.91,.38,.055,.06,mat('#f0bd62',.25,.72),true);drawerKey.visible=false;const keyHead=new THREE.Mesh(new THREE.TorusGeometry(.105,.026,10,24),mat('#ffe18a',.22,.7));keyHead.position.set(-1.78,1.04,-.91);keyHead.visible=false;scene.add(keyHead);
-const keyToothA=box('key teeth',-1.43,1.04,-.91,.045,.12,.065,mat('#e7ad4d',.25,.72));const keyToothB=box('key teeth two',-1.36,1.04,-.91,.045,.09,.065,mat('#e7ad4d',.25,.72));keyToothA.visible=false;keyToothB.visible=false;
-const keyMarker=makePickupMarker('TAKE KEY','#ffd36d');keyMarker.position.set(-1.6,1.42,-.91);const keyGlow=new THREE.PointLight('#ffc64e',0,1.8,2);keyGlow.position.set(-1.6,1.25,-.91);scene.add(keyGlow);
+box('desk top',-1.6,1.15,-2.1,4.1,.18,1.45,wood);box('desk front',-1.6,.76,-1.5,3.8,.68,.12,darkWood);
+for(const x of [-3,-.2,.3])for(const z of [-2.62,-1.58])box('desk leg',x,.53,z,.14,1.05,.14,darkWood);
+const drawer=box('drawer base',-1.6,.735,-1.73,1.02,.055,.78,mat('#171b24'),true);const drawerFace=box('jammed drawer',-1.6,.92,-1.325,.98,.29,.025,darkWood,true);const drawerPull=box('drawer pull',-1.6,.92,-1.28,.17,.035,.055,brass);
+const drawerSideA=box('drawer side',-2.09,.83,-1.73,.045,.22,.78,wood),drawerSideB=box('drawer side',-1.11,.83,-1.73,.045,.22,.78,wood);
+const drawerKey=box('drawer key',-1.6,.79,-2.00,.38,.035,.045,mat('#f0bd62',.25,.72),true);drawerKey.visible=false;const keyHead=new THREE.Mesh(new THREE.TorusGeometry(.105,.026,10,24),mat('#ffe18a',.22,.7));keyHead.position.set(-1.78,.79,-2.00);keyHead.visible=false;scene.add(keyHead);
+const keyToothA=box('key teeth',-1.43,.79,-2.00,.045,.12,.045,mat('#e7ad4d',.25,.72));const keyToothB=box('key teeth two',-1.36,.79,-2.00,.045,.09,.045,mat('#e7ad4d',.25,.72));keyToothA.visible=false;keyToothB.visible=false;
+const keyMarker=makePickupMarker('TAKE KEY','#ffd36d');keyMarker.position.set(-1.6,1.16,-1.92);const keyGlow=new THREE.PointLight('#ffc64e',0,1.8,2);keyGlow.position.set(-1.6,1.02,-1.95);scene.add(keyGlow);
 // Mixer panel with tactile faders
 box('mixing console',-2.15,1.28,-2.12,1.2,.12,.82,black,true);
 for(let c=0;c<3;c++){box('channel strip',-2.55+c*.4,1.35,-2.12,.31,.025,.65,mat('#242729'));for(let n=0;n<3;n++){const knobMesh=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.035,16),brass);knobMesh.rotation.x=Math.PI/2;knobMesh.position.set(-2.55+c*.4,1.38,-2.31+n*.17);scene.add(knobMesh)}box('fader slot',-2.55+c*.4,1.38,-1.94,.025,.014,.22,mat('#111'));box('fader cap',-2.55+c*.4,1.4,-2.0,.1,.045,.065,cream)}
 // Turntable platter, record and arm
-const turntable=box('turntable',-1.05,1.29,-2.13,1.25,.12,.92,mat('#262523'),true);
-const platter=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.055,48),mat('#77716a',.3,.5));platter.position.set(-1.05,1.38,-2.13);scene.add(platter);
-const record=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.018,64),mat('#11151d',.32,.25));record.position.set(-1.05,1.42,-2.13);record.visible=false;scene.add(record);
-const label=new THREE.Mesh(new THREE.CircleGeometry(.105,32),mat('#1de1ff'));label.rotation.x=-Math.PI/2;label.position.set(-1.05,1.433,-2.13);label.visible=false;scene.add(label);
-const reverseSwitch=box('reverse switch',-.48,1.39,-1.92,.14,.09,.14,magenta,true);
-const reverseLamp=box('reverse lamp',-.2,1.39,-1.92,.08,.07,.08,cyan);
+const turntable=box('turntable',-.55,1.29,-2.13,2,.12,1.45,mat('#262523'),true);
+const platter=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.055,48),mat('#77716a',.3,.5));platter.position.set(-.55,1.38,-2.13);scene.add(platter);
+const recordGroup=new THREE.Group();recordGroup.position.set(-.55,0,-2.13);recordGroup.visible=false;scene.add(recordGroup);
+const record=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.018,48),mat('#11151d',.32,.25));record.position.set(0,1.42,0);recordGroup.add(record);
+const labelArt=document.createElement('canvas');labelArt.width=labelArt.height=256;const labelCtx=labelArt.getContext('2d');labelCtx.fillStyle='#1de1ff';labelCtx.beginPath();labelCtx.arc(128,128,122,0,Math.PI*2);labelCtx.fill();labelCtx.fillStyle='#f235ff';labelCtx.beginPath();labelCtx.moveTo(128,18);labelCtx.lineTo(164,82);labelCtx.lineTo(128,74);labelCtx.fill();labelCtx.fillStyle='#08121f';labelCtx.font='bold 92px monospace';labelCtx.textAlign='center';labelCtx.textBaseline='middle';labelCtx.fillText('A',128,146);const labelTexture=new THREE.CanvasTexture(labelArt);labelTexture.colorSpace=THREE.SRGBColorSpace;
+const label=new THREE.Mesh(new THREE.CircleGeometry(.105,24),new THREE.MeshStandardMaterial({map:labelTexture,roughness:.5}));label.rotation.x=-Math.PI/2;label.position.set(0,1.433,0);recordGroup.add(label);
+const reverseSwitch=new THREE.Mesh(new THREE.CylinderGeometry(.065,.075,.09,20),magenta);reverseSwitch.name='reverse switch';reverseSwitch.position.set(.02,1.39,-1.92);scene.add(reverseSwitch);interactables.push(reverseSwitch);
+const reverseLamp=new THREE.Mesh(new THREE.SphereGeometry(.045,16,12),cyan);reverseLamp.name='reverse lamp';reverseLamp.position.set(.3,1.39,-1.92);scene.add(reverseLamp);
 // Keyed wall safe. Its vinyl is only exposed once the door swings open.
 box('safe interior back',4.31,1.55,-2.8,.1,1.48,1.2,mat('#101a28',.55,.58));
 box('safe shell top',3.88,2.29,-2.8,.9,.1,1.2,mat('#34475b',.32,.62));box('safe shell bottom',3.88,.81,-2.8,.9,.1,1.2,mat('#34475b',.32,.62));
 box('safe shell side one',3.88,1.55,-3.37,.9,1.38,.08,mat('#34475b',.32,.62));box('safe shell side two',3.88,1.55,-2.23,.9,1.38,.08,mat('#34475b',.32,.62));
-const safeDoor=box('safe door',3.39,1.55,-2.8,.09,1.27,1.03,mat('#182433',.25,.72),true);
+const safePivot=new THREE.Group();safePivot.position.set(3.39,0,-3.315);scene.add(safePivot);
+const safeDoor=new THREE.Mesh(new THREE.BoxGeometry(.09,1.27,1.03),mat('#182433',.25,.72));safeDoor.name='safe door';safeDoor.position.set(0,1.55,.515);safeDoor.castShadow=true;safeDoor.receiveShadow=true;safePivot.add(safeDoor);interactables.push(safeDoor);
 box('safe frame upper',3.31,2.25,-2.8,.055,.07,1.17,cyan);box('safe frame lower',3.31,.85,-2.8,.055,.07,1.17,cyan);box('safe frame left',3.31,1.55,-3.35,.055,1.45,.07,cyan);box('safe frame right',3.31,1.55,-2.25,.055,1.45,.07,cyan);
-const safeDial=new THREE.Mesh(new THREE.TorusGeometry(.17,.025,10,28),brass);safeDial.rotation.y=Math.PI/2;safeDial.position.set(3.32,1.55,-2.8);scene.add(safeDial);
+const safeDial=new THREE.Mesh(new THREE.TorusGeometry(.17,.025,10,28),brass);safeDial.rotation.y=-Math.PI/2;safeDial.position.set(-.07,0,0);safeDoor.add(safeDial);
+const safeHandle=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.32,12),brass);safeHandle.rotation.z=Math.PI/2;safeHandle.position.set(-.09,0,.32);safeDoor.add(safeHandle);
 const vinylItem=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,.035,64),mat('#141923',.2,.42));vinylItem.rotation.z=Math.PI/2;vinylItem.position.set(3.73,1.56,-2.8);vinylItem.visible=false;vinylItem.name='safe vinyl';interactables.push(vinylItem);
 const vinylLabel=new THREE.Mesh(new THREE.CircleGeometry(.13,32),mat('#ff66da',.24,.35));vinylLabel.rotation.y=-Math.PI/2;vinylLabel.position.set(3.695,1.56,-2.8);vinylLabel.visible=false;scene.add(vinylLabel);
 const vinylGroove=new THREE.Mesh(new THREE.TorusGeometry(.27,.008,6,48),cyan);vinylGroove.rotation.y=-Math.PI/2;vinylGroove.position.set(3.69,1.56,-2.8);vinylGroove.visible=false;scene.add(vinylGroove);
 const vinylMarker=makePickupMarker('TAKE VINYL','#ff68d7');vinylMarker.position.set(3.72,2.18,-2.8);const vinylGlow=new THREE.PointLight('#ec54ff',0,2.2,2);vinylGlow.position.set(3.5,1.8,-2.8);scene.add(vinylGlow);
-const spindle=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.06,12),brass);spindle.position.set(-1.05,1.45,-2.13);scene.add(spindle);
-const arm=new THREE.Group();arm.position.set(-.55,1.4,-2.45);arm.rotation.y=-.27;scene.add(arm);const armRod=new THREE.Mesh(new THREE.CylinderGeometry(.022,.03,.65,12),brass);armRod.rotation.z=Math.PI/2;armRod.position.x=-.24;arm.add(armRod);
+const spindle=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.06,12),brass);spindle.position.set(-.55,1.45,-2.13);scene.add(spindle);
+const armBase=new THREE.Mesh(new THREE.CylinderGeometry(.075,.09,.1,20),brass);armBase.position.set(-.05,1.42,-2.45);scene.add(armBase);
+const arm=new THREE.Group();arm.position.set(-.05,1.61,-2.45);arm.rotation.y=-.27;scene.add(arm);const armRod=new THREE.Mesh(new THREE.CylinderGeometry(.022,.03,.65,12),brass);armRod.rotation.z=Math.PI/2;armRod.position.x=-.24;arm.add(armRod);
 // Desk lamp
 const lampStem=new THREE.Mesh(new THREE.CylinderGeometry(.025,.04,.55,12),brass);lampStem.position.set(-2.85,1.52,-2.25);scene.add(lampStem);
 const shade=new THREE.Mesh(new THREE.ConeGeometry(.23,.24,24,1,true),mat('#88704f',.46,.35));shade.position.set(-2.85,1.85,-2.25);shade.rotation.x=Math.PI;scene.add(shade);
 const deskLight=new THREE.PointLight('#f0bc7b',7,3,2);deskLight.position.set(-2.85,1.7,-2.25);scene.add(deskLight);
 
-// Film projector on a wheeled cabinet, with visible twin reels and lens.
-box('projector cabinet',1.75,.58,-4.2,1.25,1.05,1.15,darkWood);box('projector body',1.7,1.48,-4.25,1.25,.62,.8,mat('#44433e',.45,.48));
-for(const x of [1.35,2.05]){const reel=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.07,32),brass);reel.rotation.z=Math.PI/2;reel.position.set(x,2.12,-4.18);scene.add(reel);const hub=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.08,20),black);hub.rotation.z=Math.PI/2;hub.position.set(x,2.12,-4.18);scene.add(hub);for(let a=0;a<6;a++){const spoke=new THREE.Mesh(new THREE.BoxGeometry(.012,.47,.014),black);spoke.position.set(x,2.12,-4.18);spoke.rotation.x=a*Math.PI/3;scene.add(spoke)}}
-const lens=new THREE.Mesh(new THREE.CylinderGeometry(.17,.23,.32,24),mat('#24292c',.24,.68));lens.rotation.x=Math.PI/2;lens.position.set(1.7,1.5,-3.8);scene.add(lens);
-const beam=new THREE.SpotLight('#e3c995',16,10,Math.PI/10,.55,1.2);beam.position.set(1.7,1.5,-3.7);beam.target.position.set(0,2.5,-5.1);scene.add(beam,beam.target);
-
-// Reel canister and forgotten clues on a side shelf.
-box('side shelf',-4.22,1.6,-3.45,.85,.12,2.1,wood);box('film canister',-4.12,1.9,-3.55,.34,.34,.34,mat('#66615a',.45,.55),true);
-const canLid=new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.035,32),brass);canLid.position.set(-4.12,2.09,-3.55);scene.add(canLid);
-// Framed poster hint on the right wall
-box('poster frame',4.81,2.65,-1.6,.05,1.7,1.15,brass);box('poster',4.77,2.65,-1.6,.035,1.58,1.03,mat('#855342'));
-box('poster art',4.745,2.65,-1.6,.018,1.17,.63,mat('#d2a56c'));
-for(let i=0;i<4;i++)box('poster text',4.728,2.28-i*.09,-1.6,.012,.018,.54,mat('#483a32'));
-// Dusty chair and loose canisters add scale and silhouette.
-box('chair seat',.35,.75,-.7,.85,.16,.75,mat('#45413a'));box('chair back',.35,1.35,-.34,.85,1.05,.14,mat('#393630'));
-for(const x of [0, .7])for(const z of [-.95,-.45])box('chair leg',x,.35,z,.07,.68,.07,darkWood);
-for(let i=0;i<3;i++){const can=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.28,20),mat(i===1?'#777061':'#544f46',.5,.36));can.position.set(3.25+i*.34,.16,-3.7);scene.add(can)}
+// Low lounge seat keeps the center aisle open.
+box('studio lounge seat',-3.65,.48,.15,1.1,.2,.76,mat('#39434b'));box('studio lounge back',-3.65,.94,-.19,1.1,.78,.16,mat('#303b45'));
+for(const x of [-4.1,-3.2])for(const z of [-.12,.42])box('lounge leg',x,.2,z,.055,.4,.055,darkWood);
 
 // Room shell and puzzle scenery are shared; each room module supplies local accents.
 function buildConnectedRoom(index){
@@ -220,7 +215,7 @@ for(let i=0;i<dustCount;i++){dustPos[i*3]=(Math.random()-.5)*8;dustPos[i*3+1]=Ma
 dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#d9bd8e',size:.018,transparent:true,opacity:.38}));scene.add(dust);
 
 // First-person look and movement, with a soft body-size boundary around the set.
-let yaw=0,pitch=0,locked=false,started=false,playing=false,drawerOpen=false,hasKey=false,safeOpen=false,hasVinyl=false,vinylPlaced=false,reversePlayback=false,codeRevealed=false,doorPuzzleUnlocked=false,roomIndex=0;
+let yaw=0,pitch=0,locked=false,started=false,playing=false,drawerOpen=false,hasKey=false,safeOpen=false,hasVinyl=false,vinylPlaced=false,reversePlayback=false,codeRevealed=false,doorPuzzleUnlocked=false,roomIndex=0,recordSpinSpeed=0;
 const keys=new Set(), raycaster=new THREE.Raycaster();
 const startScreen=document.querySelector('#start-screen'), prompt=document.querySelector('#interaction'), promptLabel=document.querySelector('#interaction-label'), toast=document.querySelector('#toast');
 const objective=document.querySelector('#objective-text'),progressCount=document.querySelector('#progress-count'),progressFill=document.querySelector('#progress-fill'),recordLabel=document.querySelector('#record-label');
@@ -228,7 +223,7 @@ function showToast(message){toast.textContent=message;toast.classList.add('visib
 const roomTitles=ROOMS.map(room=>room.title);
 function setRoomLabel(){const number=`ROOM ${String(roomIndex+1).padStart(2,'0')}`;document.querySelector('#room-number').textContent=number;document.querySelector('#room-title').textContent=roomTitles[roomIndex]||'UNMAPPED ROOM';document.querySelector('#room-marker-name').textContent=roomTitles[roomIndex];document.querySelector('#room-marker-detail').textContent=ROOMS[roomIndex].detail;for(let i=0;i<ROOMS.length;i++){const node=document.querySelector(`#route-node-${i}`);node.classList.toggle('active',i===roomIndex);node.classList.toggle('visited',i<roomIndex);}}
 function updateProgress(){progressCount.textContent=`${String(roomIndex+1).padStart(2,'0')} / 03`;progressFill.style.width=`${((roomIndex+1)/3)*100}%`;if(roomIndex===2){objective.textContent='Reconcile the three fragments on the canvas to open the exit.';return}if(roomIndex===1){objective.textContent=!photoBright?'Raise the darkroom brightness switch.':!cameraMode?'Pick up the revealed camera.':photoFound.size<5?`Use filters to find paintings (${photoFound.size}/5).`:!translationRead||!orderRead?'Examine the two wall prints.':!photoWordUnlocked?'Enter the ordered five-letter word at the exit lock.':'Walk through the unlocked door to Room 03.';return}objective.textContent=!drawerOpen?'Open the desk drawer and look inside.':!hasKey?'Take the brass key from the drawer.':!safeOpen?'Use the key on the wall safe.':!(hasVinyl||vinylPlaced)?'Collect the vinyl from the safe.':!vinylPlaced?'Place the vinyl on the turntable.':!codeRevealed?'Play the track in reverse to reveal the code.':!doorPuzzleUnlocked?'Enter 6767 on the door keypad.':'Walk through the unlocked cyan door.';}
-function openDoor(door){if(door.boundary===-5.5&&!doorPuzzleUnlocked){showToast('The exit is locked. Find the vinyl code and enter it at the keypad.');return}if(door.boundary===-16.5&&!photoWordUnlocked){showToast('Inspect the painting through all five lenses, then study the wall prints.');return}if(!door.isOpen){door.isOpen=true;door.mesh.rotation.y=Math.PI/2;showToast('Door swung open. Walk through it.');}else showToast('Door is open. Walk through.');}
+function openDoor(door){if(door.boundary===-5.5&&!doorPuzzleUnlocked){showToast('The exit is locked. Find the vinyl code and enter it at the keypad.');return}if(door.boundary===-16.5&&!photoWordUnlocked){showToast('Inspect the painting through all five lenses, then study the wall prints.');return}if(!door.isOpen){door.isOpen=true;if(door.boundary===-5.5)door.targetAngle=-Math.PI/2;else door.mesh.rotation.y=Math.PI/2;showToast('Door swung open. Walk through it.');}else showToast('Door is open. Walk through.');}
 function syncRoomIndex(){const next=camera.position.z>-5.5?0:camera.position.z>-16.5?1:2;if(next!==roomIndex){roomIndex=next;setRoomLabel();updateProgress();showToast(`Entered ${roomTitles[roomIndex]}.`);}}
 function begin(){started=true;startScreen.classList.add('hidden');canvas.requestPointerLock?.()}
 document.querySelector('#start-button').addEventListener('click',begin);
@@ -254,11 +249,11 @@ canvas.addEventListener('click',()=>{if(started&&!locked)canvas.requestPointerLo
 const soundButton=document.querySelector('#sound-toggle');let soundOn=true;
 soundButton.addEventListener('click',()=>{soundOn=!soundOn;document.querySelector('#sound-label').textContent=soundOn?'SOUND ON':'SOUND OFF';if(!soundOn)stopTone();else if(playing)startTone()});
 let audioContext=null,audioSource=null,audioGain=null;
-function makeTrackBuffer(reverse){const rate=audioContext.sampleRate,length=rate*3,buffer=audioContext.createBuffer(1,length,rate),samples=buffer.getChannelData(0),notes=[55,65.4,73.4,82.4,73.4,65.4,55,82.4],step=3/notes.length;for(let i=0;i<length;i++){const time=i/rate,index=Math.floor(time/step),local=time%step,env=Math.min(1,local*16)*Math.min(1,(step-local)*9),f=notes[index];samples[i]=(.24*Math.sin(2*Math.PI*f*local)+.08*Math.sin(2*Math.PI*f*2*local))*env;}if(reverse)samples.reverse();return buffer;}
-function startTone(){if(!soundOn)return;try{audioContext??=new(window.AudioContext||window.webkitAudioContext)();audioContext.resume();stopTone();audioGain??=audioContext.createGain();audioGain.gain.value=.34;audioGain.connect(audioContext.destination);audioSource=audioContext.createBufferSource();audioSource.buffer=makeTrackBuffer(reversePlayback);audioSource.loop=true;audioSource.connect(audioGain);audioSource.start();}catch{}}
+function makeTrackBuffer(reverse){const rate=audioContext.sampleRate,length=rate*3,buffer=audioContext.createBuffer(1,length,rate),samples=buffer.getChannelData(0),notes=[55,65.4,73.4,82.4,73.4,65.4,55,82.4],step=3/notes.length;let peak=0;for(let i=0;i<length;i++){const time=i/rate,index=Math.floor(time/step),local=time%step,env=Math.min(1,local*16)*Math.min(1,(step-local)*9),f=notes[index];samples[i]=(.24*Math.sin(2*Math.PI*f*local)+.08*Math.sin(2*Math.PI*f*2*local)+.035*Math.sin(2*Math.PI*f*3*local))*env;peak=Math.max(peak,Math.abs(samples[i]));}const scale=.88/Math.max(peak,.001);for(let i=0;i<length;i++)samples[i]*=scale;if(reverse)samples.reverse();return buffer;}
+function startTone(){if(!soundOn)return;try{audioContext??=new(window.AudioContext||window.webkitAudioContext)();audioContext.resume();stopTone();audioGain??=audioContext.createGain();audioGain.gain.value=.9;audioGain.connect(audioContext.destination);audioSource=audioContext.createBufferSource();audioSource.buffer=makeTrackBuffer(reversePlayback);audioSource.loop=true;audioSource.connect(audioGain);audioSource.start();}catch{}}
 function stopTone(){if(audioSource){try{audioSource.stop()}catch{}audioSource.disconnect();audioSource=null;}}
 function updateRecordLabel(){recordLabel.classList.toggle('visible',playing||codeRevealed);recordLabel.querySelector('span').textContent=codeRevealed?'REVERSE SIGNAL DECODED':reversePlayback?'REVERSE PLAYBACK':'FORWARD PLAYBACK';recordLabel.querySelector('strong').textContent=codeRevealed?'6767':reversePlayback?'REWIND':'—';}
-function nearest(){camera.rotation.set(pitch,yaw,0,'YXZ');if(safeOpen&&!hasVinyl&&camera.position.distanceTo(vinylItem.position)<2.2)return vinylItem;raycaster.setFromCamera(new THREE.Vector2(0,0),camera);const hits=raycaster.intersectObjects(interactables,false).filter(hit=>hit.object.visible);return hits.length&&hits[0].distance<2.5?hits[0].object:null}
+function nearest(){camera.rotation.set(pitch,yaw,0,'YXZ');raycaster.setFromCamera(new THREE.Vector2(0,0),camera);if(safeOpen&&!hasVinyl){const toVinyl=vinylItem.position.clone().sub(camera.position),distance=toVinyl.length();if(distance<2.8&&raycaster.ray.direction.dot(toVinyl.normalize())>.72)return vinylItem;}const hits=raycaster.intersectObjects(interactables,false).filter(hit=>hit.object.visible&&!(safeOpen&&hit.object.name==='safe door'));return hits.length&&hits[0].distance<2.5?hits[0].object:null}
 function interact(){
   const hit=nearest();if(!hit)return;
   const passage=roomDoorObjects.find(door=>door.mesh===hit);if(passage){openDoor(passage);return;}
@@ -266,7 +261,7 @@ function interact(){
   const patchState=patch=>{for(const[key,value]of Object.entries(patch))switch(key){case'drawerOpen':drawerOpen=value;break;case'hasKey':hasKey=value;break;case'safeOpen':safeOpen=value;break;case'hasVinyl':hasVinyl=value;break;case'vinylPlaced':vinylPlaced=value;break;case'playing':playing=value;break;case'reversePlayback':reversePlayback=value;break;case'codeRevealed':codeRevealed=value;break;case'doorPuzzleUnlocked':doorPuzzleUnlocked=value;break;case'photoBright':photoBright=value;break;case'cameraMode':cameraMode=value;break;case'translationRead':translationRead=value;break;case'orderRead':orderRead=value;break;case'photoWordUnlocked':photoWordUnlocked=value;break;}};
   const handled=ROOMS[roomIndex].interact?.(hit.name,{
     getState,patchState,showToast,update:updateProgress,openKeypad,startAudio:startTone,stopAudio:stopTone,updateRecordLabel,
-    visual:{drawer,drawerFace,drawerKey,keyHead,keyToothA,keyToothB,keyMarker,keyGlow,safeDoor,safeDial,vinylItem,vinylLabel,vinylGroove,vinylMarker,vinylGlow,record,label,reverseLamp,magenta,cyan,
+    visual:{drawer,drawerFace,drawerKey,keyHead,keyToothA,keyToothB,keyMarker,keyGlow,safeDoor,safePivot,safeDial,vinylItem,vinylLabel,vinylGroove,vinylMarker,vinylGlow,record,recordGroup,label,reverseLamp,magenta,cyan,
       setBrightness:on=>{photoLight.intensity=on?18:0;photoFillLight.intensity=on?7:0;photoCamera.visible=on;photoCameraBody.visible=on;photoCameraMarker.visible=on;if(!on){photoHud.hidden=true;document.querySelector('#game').classList.remove('photo-lens-mode');setFilter(activeFilter)}},
       setCameraMode:on=>{photoHud.hidden=!on;document.querySelector('#game').classList.toggle('photo-lens-mode',on);if(on)setFilter(activeFilter)}},
     showTranslation:()=>{translationGrid.replaceChildren(...photoTranslationEntries.flatMap(({glyph,letter})=>{const symbol=document.createElement('span'),value=document.createElement('b');symbol.textContent=String.fromCharCode(glyph);value.textContent=letter;return [symbol,value]}));translationOverlay.hidden=false;document.exitPointerLock?.()},
@@ -298,8 +293,15 @@ function tick(){
   }
   camera.position.y=1.62;syncRoomIndex();
   const target=nearest();prompt.classList.toggle('visible',!!target);
-  if(target){const door=roomDoorObjects.find(item=>item.mesh===target);const names={'jammed drawer':drawerOpen?'TAKE KEY':'OPEN DRAWER','drawer key':'TAKE BRASS KEY','safe door':hasKey?'UNLOCK SAFE':'SAFE — KEY REQUIRED','safe vinyl':'TAKE VINYL','turntable':vinylPlaced?(playing?'STOP RECORD':'PLAY RECORD'):hasVinyl?'PLACE VINYL':'TURNTABLE — NO RECORD','reverse switch':`REVERSE: ${reversePlayback?'ON':'OFF'}`,'room keypad':'ENTER ACCESS CODE','mixing console':'INSPECT MIXER','brightness switch':photoBright?'SWITCH OFF WORK LIGHT':'RAISE WORK LIGHT','photo camera':'PICK UP CAMERA','translation poster':'INSPECT PRINT A','order poster':'INSPECT PRINT B','word lock':'ENTER WORD','photo painting':'INSPECT PAINTING','framed canvas':'INSPECT STUDY','art studio exit':'CHECK EXIT'};promptLabel.textContent=door?(door.isOpen?'WALK THROUGH DOOR':camera.position.z>door.boundary?'E OPEN CYAN DOOR':'E OPEN MAGENTA RETURN'):(names[target.name]||'INSPECT');}
-  if(playing)record.rotation.y+=dt*1.8;if(keyMarker.visible)keyMarker.position.y=1.42+Math.sin(clock.elapsedTime*2.4)*.035;if(vinylMarker.visible)vinylMarker.position.y=2.18+Math.sin(clock.elapsedTime*2.1)*.045;dust.rotation.y+=dt*.008;renderer.render(scene,camera);
+  if(target){const door=roomDoorObjects.find(item=>item.mesh===target);const names={'jammed drawer':drawerOpen?'TAKE KEY':'OPEN DRAWER','drawer key':'TAKE BRASS KEY','safe door':safeOpen?'SAFE OPEN':hasKey?'UNLOCK SAFE':'SAFE — KEY REQUIRED','safe vinyl':'TAKE VINYL','turntable':vinylPlaced?(playing?'STOP RECORD':'PLAY RECORD'):hasVinyl?'PLACE VINYL':'TURNTABLE — NO RECORD','reverse switch':`REVERSE: ${reversePlayback?'ON':'OFF'}`,'room keypad':'ENTER ACCESS CODE','mixing console':'INSPECT MIXER','brightness switch':photoBright?'SWITCH OFF WORK LIGHT':'RAISE WORK LIGHT','photo camera':'PICK UP CAMERA','translation poster':'INSPECT PRINT A','order poster':'INSPECT PRINT B','word lock':'ENTER WORD','photo painting':'INSPECT PAINTING','framed canvas':'INSPECT STUDY','art studio exit':'CHECK EXIT'};promptLabel.textContent=door?(door.isOpen?'WALK THROUGH DOOR':camera.position.z>door.boundary?'E OPEN CYAN DOOR':'E OPEN MAGENTA RETURN'):(names[target.name]||'INSPECT');}
+  const drawerPrev=drawer.position.z,drawerTarget=drawerOpen?-1.04:-1.73;drawer.position.z+=(drawerTarget-drawer.position.z)*(1-Math.exp(-dt*8));const drawerDelta=drawer.position.z-drawerPrev;
+  drawerFace.position.z=drawer.position.z+.405;drawerPull.position.z=drawer.position.z+.45;drawerSideA.position.z=drawer.position.z;drawerSideB.position.z=drawer.position.z;
+  for(const part of [drawerKey,keyHead,keyToothA,keyToothB,keyMarker,keyGlow])part.position.z+=drawerDelta;
+  const animBlend=1-Math.exp(-dt*6);safePivot.rotation.y+=((safeOpen?-Math.PI/2:0)-safePivot.rotation.y)*animBlend;
+  for(const door of roomDoorObjects)if(door.boundary===-5.5)door.pivot.rotation.y+=(door.targetAngle-door.pivot.rotation.y)*animBlend;
+  const wantedSpin=playing?3.49:0;recordSpinSpeed+=(wantedSpin-recordSpinSpeed)*animBlend;recordGroup.rotation.y+=dt*recordSpinSpeed;recordGroup.scale.lerp(new THREE.Vector3(1,1,1),animBlend);
+  arm.position.y+=( (playing?1.48:1.61)-arm.position.y)*animBlend;
+  if(keyMarker.visible)keyMarker.position.y=1.16+Math.sin(clock.elapsedTime*2.4)*.025;if(vinylMarker.visible)vinylMarker.position.y=2.18+Math.sin(clock.elapsedTime*2.1)*.045;dust.rotation.y+=dt*.008;renderer.render(scene,camera);
 }
 const clock=new THREE.Clock();tick();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.75))});

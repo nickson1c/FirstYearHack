@@ -59,20 +59,21 @@ import { ROOMS } from './rooms/index.js?v=room03-gallery-win-v9';
   quad([[5,0,5.5],[5,0,-5.5],[5,5,-5.5],[5,5,5.5]],'#302a3b');
   buildPartition(-5.5,0);
   for(let x=-4.7;x<=4.8;x+=.75) box(x,.012,0,.012,.012,10.7,'#171615');
-  // Acoustic treatment, screen, booth door, and wall framing.
+  // Acoustic treatment, studio door, and wall framing.
   for(let x=-4.25;x<=4.3;x+=1.35){box(x,2.65,-5.27,1.05,2.2,.09,'#292827');for(let k=0;k<5;k++)box(x-.38+k*.19,2.65,-5.21,.022,1.9,.018,'#49423a');}
   box(-3.25,3.45,-5.35,2.8,1.05,.08,'#07121f','#16849b');
-  box(-.15,2.52,-5.18,2.55,1.56,.08,'#181a1b');box(-.15,2.52,-5.12,2.28,1.29,.025,'#a68c68','#9c835f');
+  box(2.1,.54,-4.72,2.35,.12,.68,'#5a402b');box(2.1,.11,-4.72,2.35,.12,.68,'#292832');
+  for(let i=0;i<6;i++)box(1.22+i*.34,.91,-4.77,.29,.65,.035,['#9b6048','#345f68','#956a96','#c18a54','#50775f','#7c5361'][i]);
   for(let z=-4.7;z<5;z+=1.1){box(-4.85,2.5,z,.08,4.8,.07,'#201b17');box(4.85,2.5,z,.08,4.8,.07,'#201b17');}
   // Desk, drawer, turntable, and mixer.
-  box(-1.65,1.15,-2.15,3.3,.18,1.5,'#4b3b32');box(-1.65,.78,-1.46,3.08,.68,.13,'#292832');currentFaceCondition=()=>!puzzle.drawerOpen;box(-1.65,.93,-1.37,1.04,.36,.09,'#392d2b','#6c4b32');currentFaceCondition=()=>puzzle.drawerOpen;box(-1.65,.93,-1.06,1.04,.36,.09,'#171c27','#27647b');currentFaceCondition=null;box(-1.65,.93,-1.31,.16,.045,.04,'#c09058');addTarget('drawer',-1.6,.92,-1.41);
-  currentFaceCondition=()=>puzzle.drawerOpen&&!puzzle.hasKey;box(-1.6,1.03,-.91,.38,.055,.06,'#f4c55d');box(-1.78,1.03,-.91,.16,.16,.045,'#ffe18a');box(-1.4,1.03,-.91,.045,.12,.065,'#e7ad4d');box(-1.34,1.03,-.91,.045,.09,.065,'#e7ad4d');currentFaceCondition=null;addTarget('key',-1.6,1.03,-.91,()=>puzzle.drawerOpen&&!puzzle.hasKey);
-  for(const x of [-3,-.25])for(const z of [-2.7,-1.6])box(x,.52,z,.14,1.04,.14,'#241c16');
-  box(-1.05,1.3,-2.17,1.22,.13,.9,'#252626');
+  box(-1.65,1.15,-2.15,4.1,.18,1.5,'#4b3b32');box(-1.65,.78,-1.46,3.8,.68,.13,'#292832');currentFaceCondition=()=>!puzzle.drawerOpen;box(-1.65,.93,-1.37,1.04,.36,.09,'#392d2b','#6c4b32');currentFaceCondition=()=>puzzle.drawerOpen;box(-1.65,.93,-1.06,1.04,.36,.09,'#171c27','#27647b');currentFaceCondition=null;box(-1.65,.93,-1.31,.16,.045,.04,'#c09058');addTarget('drawer',-1.6,.92,-1.41);
+  currentFaceCondition=()=>puzzle.drawerOpen&&!puzzle.hasKey;box(-1.6,.99,-1.36,.38,.035,.045,'#f4c55d');box(-1.78,.99,-1.36,.16,.16,.045,'#ffe18a');box(-1.4,.99,-1.36,.045,.12,.045,'#e7ad4d');box(-1.34,.99,-1.36,.045,.09,.045,'#e7ad4d');currentFaceCondition=null;addTarget('key',-1.6,.99,-1.36,()=>puzzle.drawerOpen&&!puzzle.hasKey);
+  for(const x of [-3,-.25,.3])for(const z of [-2.7,-1.6])box(x,.52,z,.14,1.04,.14,'#241c16');
+  box(-.55,1.3,-2.13,2,.13,1.45,'#252626');
   // Platter, record and label as shallow 3D discs.
   const disc=(x,y,z,r,color)=>{const steps=32;for(let i=0;i<steps;i++){const a=i/steps*Math.PI*2,b=(i+1)/steps*Math.PI*2;quad([[x,y,z],[x+Math.cos(a)*r,y,z+Math.sin(a)*r],[x+Math.cos(b)*r,y,z+Math.sin(b)*r]],i%2?shade(color,.83):color);}};
   const verticalDisc=(x,y,z,r,color)=>{const steps=36;for(let i=0;i<steps;i++){const a=i/steps*Math.PI*2,b=(i+1)/steps*Math.PI*2;quad([[x,y,z],[x,y+Math.cos(a)*r,z+Math.sin(a)*r],[x,y+Math.cos(b)*r,z+Math.sin(b)*r]],i%2?shade(color,.83):color);}};
-  disc(-1.05,1.39,-2.17,.39,'#586575');currentFaceCondition=()=>puzzle.vinylPlaced;disc(-1.05,1.405,-2.17,.34,'#111314');disc(-1.05,1.417,-2.17,.10,'#20dfff');currentFaceCondition=null;addTarget('turntable',-1.05,1.41,-2.17);box(-.48,1.42,-1.92,.14,.09,.14,'#ed39ff');box(-.2,1.42,-1.92,.08,.07,.08,'#20dfff');addTarget('reverse',-.48,1.42,-1.92);
+  disc(-.55,1.39,-2.13,.48,'#586575');currentFaceCondition=()=>puzzle.vinylPlaced;disc(-.55,1.405,-2.13,.42,'#111314');disc(-.55,1.417,-2.13,.10,'#20dfff');currentFaceCondition=null;addTarget('turntable',-.55,1.41,-2.13);box(.02,1.42,-1.92,.14,.09,.14,'#ed39ff');box(.3,1.42,-1.92,.08,.07,.08,'#20dfff');addTarget('reverse',.02,1.42,-1.92);
   // Locked safe on the side wall; the inner vinyl only appears when it is opened.
   box(4.31,1.55,-2.8,.1,1.48,1.2,'#101a28','#39708a');box(3.88,2.29,-2.8,.9,.1,1.2,'#34475b');box(3.88,.81,-2.8,.9,.1,1.2,'#34475b');box(3.88,1.55,-3.37,.9,1.38,.08,'#34475b');box(3.88,1.55,-2.23,.9,1.38,.08,'#34475b');
   box(3.31,2.25,-2.8,.055,.07,1.17,'#20dfff');box(3.31,.85,-2.8,.055,.07,1.17,'#20dfff');box(3.31,1.55,-3.35,.055,1.45,.07,'#20dfff');box(3.31,1.55,-2.25,.055,1.45,.07,'#20dfff');
@@ -80,17 +81,17 @@ import { ROOMS } from './rooms/index.js?v=room03-gallery-win-v9';
   currentFaceCondition=()=>puzzle.safeOpen&&!puzzle.hasVinyl;verticalDisc(3.73,1.56,-2.8,.4,'#111722');verticalDisc(3.705,1.56,-2.8,.13,'#ed39ff');currentFaceCondition=null;addTarget('vinyl',3.73,1.56,-2.8,()=>puzzle.safeOpen&&!puzzle.hasVinyl);
   box(-2.15,1.3,-2.16,1.12,.12,.82,'#202425');
   for(let c=0;c<3;c++){box(-2.52+c*.36,1.39,-2.16,.27,.035,.58,'#30302d');for(let k=0;k<2;k++)box(-2.52+c*.36,1.43,-2.3+k*.16,.09,.06,.08,'#ba925e');box(-2.52+c*.36,1.43,-1.97,.035,.03,.18,'#d2c4a8');}
-  // Projector cabinet, reels, lens and cone of warm light.
-  box(1.75,.59,-4.2,1.3,1.08,1.18,'#292723');box(1.75,1.5,-4.15,1.3,.62,.85,'#46443e');
-  for(const x of [1.37,2.12]){disc(x,2.15,-4.12,.34,'#9e794c');disc(x,2.16,-4.12,.09,'#282725');}
-  box(1.75,1.5,-3.68,.32,.32,.35,'#68605a','#b99d73');
-  quad([[1.92,1.4,-3.55],[1.58,1.4,-5.07],[.15,2.47,-5.04],[1.75,1.66,-3.55]],'rgba(226,190,130,.11)');
-  // Lamp, shelf, poster, chair, and canisters.
+  // Compact production workstation along the right wall and a lounge seat on the left.
+  box(3.68,.91,.15,1.72,.14,2.35,'#694638');
+  for(const x of [3.05,4.27])box(x,.45,.15,.12,.9,2.08,'#382c2e');
+  box(4.22,1.39,.15,.12,.53,.82,'#202936');box(4.145,1.41,.15,.025,.39,.66,'#2e5662');box(4.16,1.055,.15,.09,.15,.22,'#30343b');
+  box(3.52,1.02,.32,.42,.075,1.25,'#202936');
+  for(let i=0;i<12;i++)box(3.39,1.066,-.22+i*.098,.19,.025,.067,i%7===0?'#d7dce0':'#596879');
+  for(const z of [-.55,.82]){box(4.03,1.19,z,.34,.42,.34,'#242b35');box(3.84,1.2,z,.025,.21,.21,'#d39472');}
+  box(3.77,1.1,-.04,.025,.035,.48,'#4fe5c1');
+  box(-.1,.035,.1,3.2,.035,2.25,'#69435a');
   box(-2.95,1.48,-2.25,.07,.56,.07,'#997346');box(-2.95,1.83,-2.25,.45,.22,.4,'#8f7049');
-  box(-4.28,1.6,-3.45,.85,.12,2.1,'#5a402b');box(-4.12,1.91,-3.55,.35,.35,.35,'#615e58','#a9804b');
-  box(4.76,2.62,-1.6,.08,1.8,1.2,'#a17b4c');box(4.69,2.62,-1.6,.05,1.61,1.03,'#9a6044');box(4.65,2.65,-1.6,.04,1.12,.62,'#d2a56c');
-  box(.3,.76,-.75,.9,.17,.78,'#45413a');box(.3,1.33,-.38,.9,1.05,.16,'#393630');
-  for(let i=0;i<3;i++)box(3.25+i*.34,.18,-3.7,.24,.32,.24,'#625c50');
+  box(-3.65,.48,.15,1.1,.2,.76,'#39434b');box(-3.65,.94,-.19,1.1,.78,.16,'#303b45');
 
   // The next two rooms share the same dimensions and doorway positions as the WebGL scene.
   for(let index=1;index<=2;index++){
@@ -144,10 +145,10 @@ import { ROOMS } from './rooms/index.js?v=room03-gallery-win-v9';
     .filter(item=>(item.door.from===roomIndex||item.door.to===roomIndex)&&item.screen&&item.distance<3)
     .sort((a,b)=>a.distance-b.distance)
     .find(item=>Math.hypot(item.screen[0]-w/2,item.screen[1]-h/2)<Math.min(76,w*.09))?.door;
-  const nearestTarget=(w,h)=>{const vinyl=targets.find(target=>target.name==='vinyl');if(puzzle.safeOpen&&!puzzle.hasVinyl&&Math.hypot(vinyl.x-camera.x,vinyl.y-camera.y,vinyl.z-camera.z)<2.2)return vinyl;return targets.map(target=>({target,screen:project([target.x,target.y,target.z],w,h),distance:Math.hypot(target.x-camera.x,target.y-camera.y,target.z-camera.z)}))
+  const nearestTarget=(w,h)=>targets.map(target=>({target,screen:project([target.x,target.y,target.z],w,h),distance:Math.hypot(target.x-camera.x,target.y-camera.y,target.z-camera.z)}))
     .filter(item=>item.target.active()&&item.screen&&item.distance<2.7)
     .sort((a,b)=>Math.hypot(a.screen[0]-w/2,a.screen[1]-h/2)-Math.hypot(b.screen[0]-w/2,b.screen[1]-h/2))
-    .find(item=>Math.hypot(item.screen[0]-w/2,item.screen[1]-h/2)<Math.min(item.target.name==='vinyl'?150:item.target.name==='key'?115:item.target.name==='photoPainting'?300:78,w*(item.target.name==='photoPainting'?.32:.16)))?.target;};
+    .find(item=>Math.hypot(item.screen[0]-w/2,item.screen[1]-h/2)<Math.min(item.target.name==='vinyl'?150:item.target.name==='key'?115:item.target.name==='photoPainting'?300:78,w*(item.target.name==='photoPainting'?.32:.16)))?.target;
   const setRoomUI = () => {
     document.querySelector('#room-number').textContent=`ROOM ${String(roomIndex+1).padStart(2,'0')}`;
     document.querySelector('#room-title').textContent=ROOMS[roomIndex].title;
@@ -161,9 +162,9 @@ import { ROOMS } from './rooms/index.js?v=room03-gallery-win-v9';
   setRoomUI();
   const showToast = message => {const toast=document.querySelector('#toast');toast.textContent=message;toast.classList.add('visible');setTimeout(()=>toast.classList.remove('visible'),2200);};
   let audioContext=null,audioSource=null,soundOn=true;
-  const makeTrack=reverse=>{const rate=audioContext.sampleRate,length=rate*3,buffer=audioContext.createBuffer(1,length,rate),samples=buffer.getChannelData(0),notes=[55,65.4,73.4,82.4,73.4,65.4,55,82.4],step=3/notes.length;for(let i=0;i<length;i++){const time=i/rate,local=time%step,env=Math.min(1,local*16)*Math.min(1,(step-local)*9),f=notes[Math.floor(time/step)];samples[i]=(.24*Math.sin(2*Math.PI*f*local)+.08*Math.sin(2*Math.PI*f*2*local))*env;}if(reverse)samples.reverse();return buffer;};
+  const makeTrack=reverse=>{const rate=audioContext.sampleRate,length=rate*3,buffer=audioContext.createBuffer(1,length,rate),samples=buffer.getChannelData(0),notes=[55,65.4,73.4,82.4,73.4,65.4,55,82.4],step=3/notes.length;let peak=0;for(let i=0;i<length;i++){const time=i/rate,local=time%step,env=Math.min(1,local*16)*Math.min(1,(step-local)*9),f=notes[Math.floor(time/step)];samples[i]=(.24*Math.sin(2*Math.PI*f*local)+.08*Math.sin(2*Math.PI*f*2*local)+.035*Math.sin(2*Math.PI*f*3*local))*env;peak=Math.max(peak,Math.abs(samples[i]));}const gain=.88/Math.max(peak,.001);for(let i=0;i<length;i++)samples[i]*=gain;if(reverse)samples.reverse();return buffer;};
   const stopTrack=()=>{if(audioSource){try{audioSource.stop()}catch{}audioSource.disconnect();audioSource=null;}};
-  const playTrack=()=>{stopTrack();if(!soundOn)return;try{audioContext??=new(window.AudioContext||window.webkitAudioContext)();audioContext.resume();audioSource=audioContext.createBufferSource();audioSource.buffer=makeTrack(puzzle.reverse);audioSource.loop=true;const gain=audioContext.createGain();gain.gain.value=.34;audioSource.connect(gain).connect(audioContext.destination);audioSource.start();}catch{}};
+  const playTrack=()=>{stopTrack();if(!soundOn)return;try{audioContext??=new(window.AudioContext||window.webkitAudioContext)();audioContext.resume();audioSource=audioContext.createBufferSource();audioSource.buffer=makeTrack(puzzle.reverse);audioSource.loop=true;const gain=audioContext.createGain();gain.gain.value=.9;audioSource.connect(gain).connect(audioContext.destination);audioSource.start();}catch{}};
   const updatePuzzleUI=()=>{document.querySelector('#objective-text').textContent=roomIndex===1?(!puzzle.photoBright?'Raise the darkroom brightness switch.':!puzzle.cameraMode?'Pick up the revealed camera.':puzzle.photoFound.size<5?'Use filters to find paintings ('+puzzle.photoFound.size+'/5).':!puzzle.translationRead||!puzzle.orderRead?'Examine the two wall prints.':!puzzle.photoWordUnlocked?'Enter the ordered five-letter word at the exit lock.':'Walk into the art studio.'):roomIndex===2?'Reconcile the three fragments on the canvas to open the exit.':!puzzle.drawerOpen?'Open the desk drawer and look inside.':!puzzle.hasKey?'Take the brass key from the drawer.':!puzzle.safeOpen?'Use the key on the wall safe.':!(puzzle.hasVinyl||puzzle.vinylPlaced)?'Collect the vinyl from the safe.':!puzzle.vinylPlaced?'Place the vinyl on the turntable.':!puzzle.codeRevealed?'Play the track in reverse to reveal the code.':!puzzle.doorUnlocked?'Enter 6767 on the door keypad.':'Walk through the unlocked cyan door.';};
   const updateRecordLabel=()=>{const display=document.querySelector('#record-label');display.classList.toggle('visible',puzzle.playing||puzzle.codeRevealed);display.querySelector('span').textContent=puzzle.codeRevealed?'REVERSE SIGNAL DECODED':puzzle.reverse?'REVERSE PLAYBACK':'FORWARD PLAYBACK';display.querySelector('strong').textContent=puzzle.codeRevealed?'6767':puzzle.reverse?'REWIND':'—';};
   const keypadOverlay=document.querySelector('#keypad-overlay'),keypadInput=document.querySelector('#keypad-input'),keypadHint=document.querySelector('#keypad-hint');
@@ -208,7 +209,7 @@ import { ROOMS } from './rooms/index.js?v=room03-gallery-win-v9';
     const sign=roomSigns[roomIndex],signPoint=project([sign.x,sign.y,sign.z],w,h);
     if(signPoint){const scale=Math.min(1.4,Math.max(.55,620/signPoint[2])),sw=250*scale,sh=76*scale,sx=signPoint[0]-sw/2,sy=signPoint[1]-sh/2;context.fillStyle='rgba(5,12,22,.92)';context.fillRect(sx,sy,sw,sh);context.strokeStyle=sign.accent;context.lineWidth=2*scale;context.strokeRect(sx,sy,sw,sh);context.fillStyle=sign.accent;context.font=`bold ${Math.max(9,12*scale)}px monospace`;context.fillText('REEL // SCORE   ACCESS NODE',sx+9*scale,sy+18*scale);context.fillStyle='#f1f5fa';context.font=`bold ${Math.max(11,18*scale)}px sans-serif`;context.fillText(sign.title,sx+9*scale,sy+43*scale);context.fillStyle='#a9bbcc';context.font=`${Math.max(8,10*scale)}px monospace`;context.fillText(sign.detail,sx+9*scale,sy+63*scale);}
     ROOMS[2].renderFallback({context,w,h,project,roomIndex});
-    const pickup=!puzzle.hasKey&&puzzle.drawerOpen?{x:-1.6,y:1.3,z:-.91,title:'BRASS KEY',accent:'#ffd36d'}:puzzle.safeOpen&&!puzzle.hasVinyl?{x:3.73,y:2.15,z:-2.8,title:'VINYL — TAKE IT',accent:'#ff68d7'}:null;
+    const pickup=!puzzle.hasKey&&puzzle.drawerOpen?{x:-1.6,y:1.3,z:-1.28,title:'BRASS KEY',accent:'#ffd36d'}:puzzle.safeOpen&&!puzzle.hasVinyl?{x:3.73,y:2.15,z:-2.8,title:'VINYL — TAKE IT',accent:'#ff68d7'}:null;
     if(roomIndex===1){
       const switchPoint=project([1.05,1.2,-9.4],w,h);
       if(switchPoint){context.fillStyle='#e948ff';context.shadowColor='#e948ff';context.shadowBlur=18;context.fillRect(switchPoint[0]-9,switchPoint[1]-15,18,30);context.shadowBlur=0;context.fillStyle='#fff';context.font='bold 10px monospace';context.textAlign='center';context.fillText('LIGHT',switchPoint[0],switchPoint[1]+30);}
@@ -218,7 +219,7 @@ import { ROOMS } from './rooms/index.js?v=room03-gallery-win-v9';
     if(pickup){const p=project([pickup.x,pickup.y,pickup.z],w,h);if(p){const scale=Math.min(1.2,Math.max(.6,560/p[2])),pw=176*scale,ph=32*scale,px=p[0]-pw/2,py=p[1]-ph;context.save();context.shadowColor=pickup.accent;context.shadowBlur=16*scale;context.fillStyle='rgba(5,10,18,.94)';context.fillRect(px,py,pw,ph);context.strokeStyle=pickup.accent;context.lineWidth=2*scale;context.strokeRect(px,py,pw,ph);context.fillStyle=pickup.accent;context.font=`bold ${Math.max(10,14*scale)}px monospace`;context.textAlign='center';context.fillText(pickup.title,p[0],py+21*scale);context.restore();}}
     const door=nearestDoor(w,h),target=nearestTarget(w,h),hint=document.querySelector('#interaction');
     hint.classList.toggle('visible',!!door||!!target);
-    const labels={drawer:puzzle.drawerOpen?'TAKE BRASS KEY':'OPEN DRAWER',key:'TAKE BRASS KEY',safe:puzzle.hasKey?'UNLOCK SAFE':'SAFE — KEY REQUIRED',vinyl:'TAKE VINYL',turntable:puzzle.vinylPlaced?(puzzle.playing?'STOP RECORD':'PLAY RECORD'):puzzle.hasVinyl?'PLACE VINYL':'EMPTY TURNTABLE',reverse:`REVERSE ${puzzle.reverse?'ON':'OFF'}`,keypad:'ENTER ACCESS CODE',brightness:'RAISE DARKROOM LIGHTS',photoCamera:'PICK UP CAMERA',contactSheet:'INSPECT PRINT A',orderPoster:'INSPECT PRINT B',photoPainting:'INSPECT PAINTING',wordlock:'ENTER FIVE-LETTER WORD','framed canvas':'INSPECT STUDY','art studio exit':'CHECK EXIT'};
+    const labels={drawer:puzzle.drawerOpen?'TAKE BRASS KEY':'OPEN DRAWER',key:'TAKE BRASS KEY',safe:puzzle.safeOpen?'SAFE OPEN':puzzle.hasKey?'UNLOCK SAFE':'SAFE — KEY REQUIRED',vinyl:'TAKE VINYL',turntable:puzzle.vinylPlaced?(puzzle.playing?'STOP RECORD':'PLAY RECORD'):puzzle.hasVinyl?'PLACE VINYL':'EMPTY TURNTABLE',reverse:`REVERSE ${puzzle.reverse?'ON':'OFF'}`,keypad:'ENTER ACCESS CODE',brightness:'RAISE DARKROOM LIGHTS',photoCamera:'PICK UP CAMERA',contactSheet:'INSPECT PRINT A',orderPoster:'INSPECT PRINT B',photoPainting:'INSPECT PAINTING',wordlock:'ENTER FIVE-LETTER WORD','framed canvas':'INSPECT STUDY','art studio exit':'CHECK EXIT'};
     document.querySelector('#interaction-label').textContent=target?labels[target.name]:door?(door.isOpen?'WALK THROUGH DOOR':puzzle.doorUnlocked?'E OPEN DOOR':camera.z>door.boundary?'E OPEN LOCKED DOOR':'E OPEN RETURN DOOR'):'';
     // Gentle vignette preserves the original film-booth mood.
     const vignette=context.createRadialGradient(w/2,h*.52,h*.12,w/2,h*.52,h*.76);vignette.addColorStop(0,'rgba(0,0,0,0)');vignette.addColorStop(1,'rgba(0,0,0,.28)');context.fillStyle=vignette;context.fillRect(0,0,w,h);
