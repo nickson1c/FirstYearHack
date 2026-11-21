@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { ROOMS } from './rooms/index.js';
+import { ROOMS } from './rooms/index.js?v=room03-gallery-win-v9';
 
 const canvas = document.querySelector('#scene');
 const scene = new THREE.Scene();
@@ -166,7 +166,7 @@ function buildConnectedRoom(index){
   box('room sign backing',-3.35,3.45,backZ+.16,2.75,1.02,.08,black);
   addRoomSign(room.title,room.detail,room.accent,-3.35,3.45,backZ+.21);
   // A raised equipment plinth gives each room a distinct silhouette and purpose.
-  box(index===1?'signal console':index===3?'grade console':'archive plinth',-1.15,.55,centerZ-1.1,3.1,1.05,1.35,mat(index===1?'#182735':index===3?'#35273b':'#261a31',.38,.58));
+  box(index===1?'signal console':index===2?'easel work plinth':'room plinth',-1.15,.55,centerZ-1.1,3.1,1.05,1.35,mat(index===1?'#182735':index===2?'#33272d':'#261a31',.38,.58));
   box('plinth cyan edge',-1.15,1.1,centerZ-1.1,3.15,.035,1.4,cyan);
   box('equipment display',-1.15,1.35,centerZ-1.5,2.3,.38,.08,mat('#172431',.22,.45));
   for(let i=0;i<5;i++)box('status light',-2+i*.42,1.38,centerZ-1.44,.12,.035,.02,i%2?magenta:cyan);
@@ -207,28 +207,13 @@ function buildConnectedRoom(index){
     photoPaintingMaterial=new THREE.MeshBasicMaterial({map:photoBaseTexture,side:THREE.DoubleSide});
     const painting=new THREE.Mesh(new THREE.PlaneGeometry(4.35,3.05),photoPaintingMaterial);painting.position.set(-1.6,2.35,backZ+.235);painting.name='photo painting';scene.add(painting);interactables.push(painting);
   } else if(index===2) {
-    // Archive shelving, labeled canisters, and a bright scanning table distinguish the vault.
-    for(const y of [1.05,2.05,3.05]){
-      box('archive shelf',-3.55,y,centerZ-1.25,1.65,.09,5.8,mat('#69516e',.44,.58));
-      for(let n=0;n<7;n++){
-        const can=new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,.38,16),mat(n%2?'#ae7c52':'#806b9b',.42,.4));
-        can.position.set(-4.12+(n%3)*.48,y+.25,centerZ-3.45+Math.floor(n/3)*.85);scene.add(can);
-      }
-    }
-    box('archive scanner',2.8,.85,centerZ-1.8,2.2,1.5,2.5,mat('#2a2034',.28,.62));
-    box('scanner glass',2.8,1.63,centerZ-1.8,1.72,.035,2.05,mat('#b67a55',.2,.35));
-    box('scanner light',2.8,1.67,centerZ-1.8,.08,.04,1.85,magenta);
-  } else {
-    box('grading screen frame',0,2.55,backZ+.27,6.2,3.3,.12,mat('#141922',.3,.7));
-    box('grading screen',0,2.55,backZ+.19,5.8,2.9,.025,mat('#27313b',.26,.35));
-    const colorBars=['#f04b68','#f09c47','#d9d950','#4ed093','#43aee0','#9868df'];
-    colorBars.forEach((color,i)=>box('grading color bar',-2.35+i*.94,2.55,backZ+.16,.9,2.72,.025,mat(color,.25,.1)));
-    box('grading console desk',1.55,.92,centerZ-1.7,2.9,1.1,1.6,mat('#252633',.32,.62));
+    // Room 03's art zone is built by src/rooms/room-03.js.
   }
 }
-buildConnectedRoom(1);buildConnectedRoom(2);buildConnectedRoom(3);
-ROOMS.forEach(room=>room.build({THREE,scene,mat,interactables}));
-buildDoorway(-16.5,1);buildDoorway(-27.5,2);box('color suite end wall',0,2.5,-38.5,10,5,.25,wall);
+buildConnectedRoom(1);buildConnectedRoom(2);
+ROOMS.forEach(room=>room.build({THREE,scene,mat,interactables,canvas}));
+buildDoorway(-16.5,1);
+box('art studio back wall left',-2.95,2.5,-27.5,4.1,5,.25,wall);box('art studio back wall right',2.95,2.5,-27.5,4.1,5,.25,wall);box('art studio back wall lintel',0,4.15,-27.5,1.8,1.7,.25,wall);
 // Dust motes
 const dustGeo=new THREE.BufferGeometry(), dustCount=240, dustPos=new Float32Array(dustCount*3);
 for(let i=0;i<dustCount;i++){dustPos[i*3]=(Math.random()-.5)*8;dustPos[i*3+1]=Math.random()*4;dustPos[i*3+2]=(Math.random()-.5)*9-1}
@@ -242,9 +227,9 @@ const objective=document.querySelector('#objective-text'),progressCount=document
 function showToast(message){toast.textContent=message;toast.classList.add('visible');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.remove('visible'),2300)}
 const roomTitles=ROOMS.map(room=>room.title);
 function setRoomLabel(){const number=`ROOM ${String(roomIndex+1).padStart(2,'0')}`;document.querySelector('#room-number').textContent=number;document.querySelector('#room-title').textContent=roomTitles[roomIndex]||'UNMAPPED ROOM';document.querySelector('#room-marker-name').textContent=roomTitles[roomIndex];document.querySelector('#room-marker-detail').textContent=ROOMS[roomIndex].detail;for(let i=0;i<ROOMS.length;i++){const node=document.querySelector(`#route-node-${i}`);node.classList.toggle('active',i===roomIndex);node.classList.toggle('visited',i<roomIndex);}}
-function updateProgress(){progressCount.textContent=`${String(roomIndex+1).padStart(2,'0')} / 04`;progressFill.style.width=`${((roomIndex+1)/4)*100}%`;if(roomIndex>=2){objective.textContent=roomIndex===2?'Continue through the archive into the color suite.':'The four-room route is complete.';return}if(roomIndex===1){objective.textContent=!photoBright?'Raise the darkroom brightness switch.':!cameraMode?'Pick up the revealed camera.':photoFound.size<5?`Use filters to find paintings (${photoFound.size}/5).`:!translationRead||!orderRead?'Examine the two wall prints.':!photoWordUnlocked?'Enter the ordered five-letter word at the exit lock.':'Walk through the unlocked door to Room 03.';return}objective.textContent=!drawerOpen?'Open the desk drawer and look inside.':!hasKey?'Take the brass key from the drawer.':!safeOpen?'Use the key on the wall safe.':!(hasVinyl||vinylPlaced)?'Collect the vinyl from the safe.':!vinylPlaced?'Place the vinyl on the turntable.':!codeRevealed?'Play the track in reverse to reveal the code.':!doorPuzzleUnlocked?'Enter 6767 on the door keypad.':'Walk through the unlocked cyan door.';}
+function updateProgress(){progressCount.textContent=`${String(roomIndex+1).padStart(2,'0')} / 03`;progressFill.style.width=`${((roomIndex+1)/3)*100}%`;if(roomIndex===2){objective.textContent='Reconcile the three fragments on the canvas to open the exit.';return}if(roomIndex===1){objective.textContent=!photoBright?'Raise the darkroom brightness switch.':!cameraMode?'Pick up the revealed camera.':photoFound.size<5?`Use filters to find paintings (${photoFound.size}/5).`:!translationRead||!orderRead?'Examine the two wall prints.':!photoWordUnlocked?'Enter the ordered five-letter word at the exit lock.':'Walk through the unlocked door to Room 03.';return}objective.textContent=!drawerOpen?'Open the desk drawer and look inside.':!hasKey?'Take the brass key from the drawer.':!safeOpen?'Use the key on the wall safe.':!(hasVinyl||vinylPlaced)?'Collect the vinyl from the safe.':!vinylPlaced?'Place the vinyl on the turntable.':!codeRevealed?'Play the track in reverse to reveal the code.':!doorPuzzleUnlocked?'Enter 6767 on the door keypad.':'Walk through the unlocked cyan door.';}
 function openDoor(door){if(door.boundary===-5.5&&!doorPuzzleUnlocked){showToast('The exit is locked. Find the vinyl code and enter it at the keypad.');return}if(door.boundary===-16.5&&!photoWordUnlocked){showToast('Inspect the painting through all five lenses, then study the wall prints.');return}if(!door.isOpen){door.isOpen=true;door.mesh.rotation.y=Math.PI/2;showToast('Door swung open. Walk through it.');}else showToast('Door is open. Walk through.');}
-function syncRoomIndex(){const next=camera.position.z>-5.5?0:camera.position.z>-16.5?1:camera.position.z>-27.5?2:3;if(next!==roomIndex){roomIndex=next;setRoomLabel();updateProgress();showToast(`Entered ${roomTitles[roomIndex]}.`);}}
+function syncRoomIndex(){const next=camera.position.z>-5.5?0:camera.position.z>-16.5?1:2;if(next!==roomIndex){roomIndex=next;setRoomLabel();updateProgress();showToast(`Entered ${roomTitles[roomIndex]}.`);}}
 function begin(){started=true;startScreen.classList.add('hidden');canvas.requestPointerLock?.()}
 document.querySelector('#start-button').addEventListener('click',begin);
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===canvas});
@@ -304,7 +289,7 @@ function tick(){
     const blockedBySafe=(x,z)=>x>3.1&&x<4.7&&z>-3.68&&z<-1.92;
     const nextX=THREE.MathUtils.clamp(camera.position.x+move.x,-4.55,4.55);
     if(!blockedBySafe(nextX,camera.position.z))camera.position.x=nextX;
-    const nextZ=THREE.MathUtils.clamp(camera.position.z+move.z,-38.03,5.05);
+    const nextZ=THREE.MathUtils.clamp(camera.position.z+move.z,-27.03,5.05);
     if(!blockedBySafe(camera.position.x,nextZ))camera.position.z=nextZ;
     for(const door of roomDoorObjects){
       const crossed=(previousZ>door.boundary&&camera.position.z<=door.boundary)||(previousZ<door.boundary&&camera.position.z>=door.boundary);
@@ -313,7 +298,7 @@ function tick(){
   }
   camera.position.y=1.62;syncRoomIndex();
   const target=nearest();prompt.classList.toggle('visible',!!target);
-  if(target){const door=roomDoorObjects.find(item=>item.mesh===target);const names={'jammed drawer':drawerOpen?'TAKE KEY':'OPEN DRAWER','drawer key':'TAKE BRASS KEY','safe door':hasKey?'UNLOCK SAFE':'SAFE — KEY REQUIRED','safe vinyl':'TAKE VINYL','turntable':vinylPlaced?(playing?'STOP RECORD':'PLAY RECORD'):hasVinyl?'PLACE VINYL':'TURNTABLE — NO RECORD','reverse switch':`REVERSE: ${reversePlayback?'ON':'OFF'}`,'room keypad':'ENTER ACCESS CODE','mixing console':'INSPECT MIXER','brightness switch':photoBright?'SWITCH OFF WORK LIGHT':'RAISE WORK LIGHT','photo camera':'PICK UP CAMERA','translation poster':'INSPECT PRINT A','order poster':'INSPECT PRINT B','word lock':'ENTER WORD','photo painting':'INSPECT PAINTING'};promptLabel.textContent=door?(door.isOpen?'WALK THROUGH DOOR':camera.position.z>door.boundary?'E OPEN CYAN DOOR':'E OPEN MAGENTA RETURN'):(names[target.name]||'INSPECT');}
+  if(target){const door=roomDoorObjects.find(item=>item.mesh===target);const names={'jammed drawer':drawerOpen?'TAKE KEY':'OPEN DRAWER','drawer key':'TAKE BRASS KEY','safe door':hasKey?'UNLOCK SAFE':'SAFE — KEY REQUIRED','safe vinyl':'TAKE VINYL','turntable':vinylPlaced?(playing?'STOP RECORD':'PLAY RECORD'):hasVinyl?'PLACE VINYL':'TURNTABLE — NO RECORD','reverse switch':`REVERSE: ${reversePlayback?'ON':'OFF'}`,'room keypad':'ENTER ACCESS CODE','mixing console':'INSPECT MIXER','brightness switch':photoBright?'SWITCH OFF WORK LIGHT':'RAISE WORK LIGHT','photo camera':'PICK UP CAMERA','translation poster':'INSPECT PRINT A','order poster':'INSPECT PRINT B','word lock':'ENTER WORD','photo painting':'INSPECT PAINTING','framed canvas':'INSPECT STUDY','art studio exit':'CHECK EXIT'};promptLabel.textContent=door?(door.isOpen?'WALK THROUGH DOOR':camera.position.z>door.boundary?'E OPEN CYAN DOOR':'E OPEN MAGENTA RETURN'):(names[target.name]||'INSPECT');}
   if(playing)record.rotation.y+=dt*1.8;if(keyMarker.visible)keyMarker.position.y=1.42+Math.sin(clock.elapsedTime*2.4)*.035;if(vinylMarker.visible)vinylMarker.position.y=2.18+Math.sin(clock.elapsedTime*2.1)*.045;dust.rotation.y+=dt*.008;renderer.render(scene,camera);
 }
 const clock=new THREE.Clock();tick();
