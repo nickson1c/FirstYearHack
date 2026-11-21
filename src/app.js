@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { ROOMS } from './rooms/index.js?v=room03-gallery-win-v9';
+import { ROOMS } from './rooms/index.js?v=room03-fix-v11';
 
 const canvas = document.querySelector('#scene');
 const scene = new THREE.Scene();
@@ -52,13 +52,12 @@ function buildDoorway(z,boundaryIndex){
   box('partition lintel',openingX,4,z,openingWidth,2,.25,material);
   const pivot=new THREE.Group();pivot.position.set(leftEdge,0,z);scene.add(pivot);
   const door=new THREE.Mesh(new THREE.BoxGeometry(1.45,3,.12),darkWood);door.name=boundaryIndex===0?'exit door':`room door ${boundaryIndex}`;door.position.set(openingWidth/2,1.5,0);door.castShadow=true;door.receiveShadow=true;pivot.add(door);interactables.push(door);
-  if(boundaryIndex===0){const handle=new THREE.Mesh(new THREE.BoxGeometry(.055,.2,.09),brass);handle.name='door handle';handle.position.set(.48,-.02,.09);door.add(handle);}
-  else box('door handle',openingX-.55,1.48,z+.09,.06,.16,.06,brass);
+  const handle=new THREE.Mesh(new THREE.BoxGeometry(.055,.2,.09),brass);handle.name='door handle';handle.position.set(.48,-.02,.09);door.add(handle);
   box('cyan door frame',openingX,3.02,z+.16,1.62,.05,.08,cyan);
   box('magenta door frame',openingX,3.02,z-.16,1.62,.05,.08,magenta);
   if(boundaryIndex===0){box('room keypad',3.02,1.48,z+.22,.24,.82,.1,black,true);box('keypad display',3.02,1.75,z+.16,.16,.12,.025,cyan);for(let row=0;row<3;row++)for(let col=0;col<3;col++)box('keypad button',2.97+col*.05,1.55-row*.11,z+.14,.025,.025,.02,cream);}
   if(boundaryIndex===1){box('word lock',3.02,1.48,z+.22,.24,.82,.1,black,true);box('word lock display',3.02,1.75,z+.16,.16,.12,.025,magenta);for(let n=0;n<5;n++)box('word lock key',2.94+n*.04,1.48,z+.14,.025,.08,.02,cream);}
-  roomDoorObjects.push({mesh:door,pivot,boundary:z,from:boundaryIndex,to:boundaryIndex+1,isOpen:false,targetAngle:0});
+  roomDoorObjects.push({mesh:door,pivot,boundary:z,from:boundaryIndex,to:boundaryIndex+1,openingX,openingHalfWidth:openingWidth/2,isOpen:false,targetAngle:0});
 }
 function addRoomSign(title,subtitle,accent,x,y,z){
   const art=document.createElement('canvas');art.width=768;art.height=256;const ctx=art.getContext('2d');
@@ -184,10 +183,10 @@ function buildConnectedRoom(index){
     box('camera stand',-1.6,.97,centerZ-.1,.12,.62,.12,brass);
     box('camera workbench',-1.6,.64,centerZ-.1,1.8,.16,1.05,wood);
     photoCameraMarker=makePickupMarker('TAKE CAMERA','#ffd36d');photoCameraMarker.position.set(-1.6,2.05,centerZ-.1);
-    const drawPoster=(targetName,rows,y,z)=>{box(targetName,4.76,y,z,.06,1.85,1.7,mat('#171827'),true);const art=document.createElement('canvas');art.width=512;art.height=640;const ctx=art.getContext('2d');ctx.fillStyle='#171a20';ctx.fillRect(0,0,512,640);ctx.strokeStyle=targetName==='order poster'?'#7b9b9c':'#806b7f';ctx.lineWidth=5;ctx.strokeRect(9,9,494,622);ctx.fillStyle='#c9c4ba';ctx.font='34px monospace';rows.forEach((row,i)=>ctx.fillText(row,34,72+i*68));const tex=new THREE.CanvasTexture(art);tex.colorSpace=THREE.SRGBColorSpace;const panel=new THREE.Mesh(new THREE.PlaneGeometry(1.58,1.78),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));panel.rotation.y=-Math.PI/2;panel.position.set(4.72,y,z);scene.add(panel);};
+    const drawPoster=(targetName,rows,y,z,interactable=false)=>{box(targetName,4.76,y,z,.06,1.85,1.7,mat('#171827'),interactable);const art=document.createElement('canvas');art.width=512;art.height=640;const ctx=art.getContext('2d');ctx.fillStyle='#171a20';ctx.fillRect(0,0,512,640);ctx.strokeStyle=targetName==='order poster'?'#7b9b9c':'#806b7f';ctx.lineWidth=5;ctx.strokeRect(9,9,494,622);ctx.fillStyle='#c9c4ba';ctx.font='34px monospace';rows.forEach((row,i)=>ctx.fillText(row,34,72+i*68));const tex=new THREE.CanvasTexture(art);tex.colorSpace=THREE.SRGBColorSpace;const panel=new THREE.Mesh(new THREE.PlaneGeometry(1.58,1.78),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));panel.rotation.y=-Math.PI/2;panel.position.set(4.72,y,z);scene.add(panel);};
     const code=cp=>String.fromCharCode(cp);
-    drawPoster('translation poster',photoTranslationEntries.map(entry=>`${code(entry.glyph)}   ${entry.letter}`),2.9,centerZ-2.05);
-    drawPoster('order poster',photoFilterOrder.map((filter,i)=>`${filter}    ${code(photoGlyphCodes[i])}`),2.9,centerZ-4.15);
+    drawPoster('translation poster',photoTranslationEntries.map(entry=>`${code(entry.glyph)}   ${entry.letter}`),2.9,centerZ-2.05,false);
+    drawPoster('order poster',photoFilterOrder.map((filter,i)=>`${filter}    ${code(photoGlyphCodes[i])}`),2.9,centerZ-4.15,false);
     const makePainting=(symbol,version)=>{const art=document.createElement('canvas');art.width=900;art.height=640;const ctx=art.getContext('2d');const palettes=[['#182b3d','#c87958','#f0b86f'],['#202137','#8378a8','#d3a96b'],['#18343a','#51a8a3','#d98e62'],['#36243c','#dc75a4','#deb774'],['#253448','#71a6be','#e6cb91']];const [sky,accent,light]=palettes[version];const g=ctx.createLinearGradient(0,0,0,640);g.addColorStop(0,sky);g.addColorStop(1,'#211f27');ctx.fillStyle=g;ctx.fillRect(0,0,900,640);ctx.fillStyle=light;ctx.globalAlpha=.8;ctx.beginPath();ctx.arc(690-version*31,145+version*13,65,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
       ctx.fillStyle='#171d25';for(let i=0;i<10;i++){const x=i*96-20,h=100+(i*71+version*53)%220;ctx.fillRect(x,340-h,72,h);ctx.fillStyle=accent;for(let row=0;row<4;row++)ctx.fillRect(x+12+(row%2)*24,355-h+row*28,8,12);ctx.fillStyle='#171d25';}
       ctx.strokeStyle=accent;ctx.lineWidth=23;ctx.beginPath();ctx.moveTo(118,480);ctx.lineTo(118,230);ctx.quadraticCurveTo(118,96,285,96);ctx.quadraticCurveTo(450,96,450,230);ctx.lineTo(450,480);ctx.stroke();ctx.fillStyle='rgba(10,16,24,.68)';ctx.fillRect(145,245,280,235);
@@ -209,6 +208,19 @@ buildConnectedRoom(1);buildConnectedRoom(2);
 ROOMS.forEach(room=>room.build({THREE,scene,mat,interactables,canvas}));
 buildDoorway(-16.5,1);
 box('art studio back wall left',-2.95,2.5,-27.5,4.1,5,.25,wall);box('art studio back wall right',2.95,2.5,-27.5,4.1,5,.25,wall);box('art studio back wall lintel',0,4.15,-27.5,1.8,1.7,.25,wall);
+const solidBounds=[];
+scene.updateMatrixWorld(true);
+scene.traverse(object=>{
+  if(!object.isMesh||!object.geometry||/door|exit/.test(object.name.toLowerCase()))return;
+  for(let parent=object;parent;parent=parent.parent)if(!parent.visible)return;
+  object.geometry.computeBoundingBox();
+  const bounds=object.geometry.boundingBox.clone().applyMatrix4(object.matrixWorld);
+  const width=bounds.max.x-bounds.min.x,depth=bounds.max.z-bounds.min.z,height=bounds.max.y-bounds.min.y;
+  if(bounds.min.y>1.72||bounds.max.y<.22||width<.12||depth<.12||height<.16)return;
+  // Skip paper thin overlays, effects, and other surfaces that should never stop the player.
+  if((width<.055&&depth<.055)||(height<.045&&width>1))return;
+  solidBounds.push({minX:bounds.min.x,maxX:bounds.max.x,minZ:bounds.min.z,maxZ:bounds.max.z});
+});
 // Dust motes
 const dustGeo=new THREE.BufferGeometry(), dustCount=240, dustPos=new Float32Array(dustCount*3);
 for(let i=0;i<dustCount;i++){dustPos[i*3]=(Math.random()-.5)*8;dustPos[i*3+1]=Math.random()*4;dustPos[i*3+2]=(Math.random()-.5)*9-1}
@@ -222,10 +234,10 @@ const objective=document.querySelector('#objective-text'),progressCount=document
 function showToast(message){toast.textContent=message;toast.classList.add('visible');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.remove('visible'),2300)}
 const roomTitles=ROOMS.map(room=>room.title);
 function setRoomLabel(){const number=`ROOM ${String(roomIndex+1).padStart(2,'0')}`;document.querySelector('#room-number').textContent=number;document.querySelector('#room-title').textContent=roomTitles[roomIndex]||'UNMAPPED ROOM';document.querySelector('#room-marker-name').textContent=roomTitles[roomIndex];document.querySelector('#room-marker-detail').textContent=ROOMS[roomIndex].detail;for(let i=0;i<ROOMS.length;i++){const node=document.querySelector(`#route-node-${i}`);node.classList.toggle('active',i===roomIndex);node.classList.toggle('visited',i<roomIndex);}}
-function updateProgress(){progressCount.textContent=`${String(roomIndex+1).padStart(2,'0')} / 03`;progressFill.style.width=`${((roomIndex+1)/3)*100}%`;if(roomIndex===2){objective.textContent='Reconcile the three fragments on the canvas to open the exit.';return}if(roomIndex===1){objective.textContent=!photoBright?'Raise the darkroom brightness switch.':!cameraMode?'Pick up the revealed camera.':photoFound.size<5?`Use filters to find paintings (${photoFound.size}/5).`:!translationRead||!orderRead?'Examine the two wall prints.':!photoWordUnlocked?'Enter the ordered five-letter word at the exit lock.':'Walk through the unlocked door to Room 03.';return}objective.textContent=!drawerOpen?'Open the desk drawer and look inside.':!hasKey?'Take the brass key from the drawer.':!safeOpen?'Use the key on the wall safe.':!(hasVinyl||vinylPlaced)?'Collect the vinyl from the safe.':!vinylPlaced?'Place the vinyl on the turntable.':!codeRevealed?'Play the track in reverse to reveal the code.':!doorPuzzleUnlocked?'Enter 6767 on the door keypad.':'Walk through the unlocked cyan door.';}
-function openDoor(door){if(door.boundary===-5.5&&!doorPuzzleUnlocked){showToast('The exit is locked. Find the vinyl code and enter it at the keypad.');return}if(door.boundary===-16.5&&!photoWordUnlocked){showToast('Inspect the painting through all five lenses, then study the wall prints.');return}if(!door.isOpen){door.isOpen=true;if(door.boundary===-5.5)door.targetAngle=-Math.PI/2;else door.mesh.rotation.y=Math.PI/2;showToast('Door swung open. Walk through it.');}else showToast('Door is open. Walk through.');}
+function updateProgress(){progressCount.textContent=`${String(roomIndex+1).padStart(2,'0')} / 03`;progressFill.style.width=`${((roomIndex+1)/3)*100}%`;if(roomIndex===2){objective.textContent='Reconcile the three fragments on the canvas to open the exit.';return}if(roomIndex===1){objective.textContent=!photoBright?'Raise the darkroom brightness switch.':!cameraMode?'Pick up the revealed camera.':photoFound.size<5?`Use filters to find paintings (${photoFound.size}/5).`:!photoWordUnlocked?'Enter the five-letter word at the exit lock.':'Walk through the unlocked door to Room 03.';return}objective.textContent=!drawerOpen?'Open the desk drawer and look inside.':!hasKey?'Take the brass key from the drawer.':!safeOpen?'Use the key on the wall safe.':!(hasVinyl||vinylPlaced)?'Collect the vinyl from the safe.':!vinylPlaced?'Place the vinyl on the turntable.':!codeRevealed?'Play the track in reverse to reveal the code.':!doorPuzzleUnlocked?'Enter 6767 on the door keypad.':'Walk through the unlocked cyan door.';}
+function openDoor(door){if(door.boundary===-5.5&&!doorPuzzleUnlocked){showToast('The exit is locked. Find the vinyl code and enter it at the keypad.');return}if(door.boundary===-16.5&&!photoWordUnlocked){showToast('Record all five painting details, then enter FOCUS at the lock.');return}if(!door.isOpen){door.isOpen=true;door.targetAngle=-Math.PI/2;showToast('Door swung open. Walk through it.');}else showToast('Door is open. Walk through.');}
 function syncRoomIndex(){const next=camera.position.z>-5.5?0:camera.position.z>-16.5?1:2;if(next!==roomIndex){roomIndex=next;setRoomLabel();updateProgress();showToast(`Entered ${roomTitles[roomIndex]}.`);}}
-function begin(){started=true;startScreen.classList.add('hidden');canvas.requestPointerLock?.()}
+function begin(){started=true;startScreen.classList.add('hidden');startAmbient();canvas.requestPointerLock?.()}
 document.querySelector('#start-button').addEventListener('click',begin);
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===canvas});
 document.addEventListener('mousemove',e=>{if(!locked)return;yaw-=e.movementX*.0022;pitch-=e.movementY*.0019;pitch=THREE.MathUtils.clamp(pitch,-1.1,1.1)});
@@ -242,13 +254,15 @@ const closeOverlay=o=>{o.hidden=true;restoreLook()};
 document.querySelector('#translation-close').addEventListener('click',()=>closeOverlay(translationOverlay));document.querySelector('#order-close').addEventListener('click',()=>closeOverlay(orderOverlay));document.querySelector('#wordlock-close').addEventListener('click',()=>closeOverlay(wordlockOverlay));
 document.addEventListener('keydown',e=>{if(!translationOverlay.hidden||!orderOverlay.hidden){if(e.code==='Escape'){translationOverlay.hidden=true;orderOverlay.hidden=true;restoreLook()}e.preventDefault();e.stopImmediatePropagation();}});
 photoHud.addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(b)setFilter(Number(b.dataset.filter));});
-const submitWord=()=>ROOMS[1].submitWord({getState:()=>({photoFound,translationRead,orderRead}),value:wordlockInput.value,setHint:text=>{wordlockHint.textContent=text},patchState:patch=>{if('photoWordUnlocked'in patch)photoWordUnlocked=patch.photoWordUnlocked},unlockDoor:()=>{wordlockOverlay.hidden=true;const d=roomDoorObjects.find(x=>x.boundary===-16.5);d.isOpen=true;d.mesh.rotation.y=Math.PI/2},update:updateProgress,showToast,restoreLook});
+const submitWord=()=>ROOMS[1].submitWord({getState:()=>({photoFound,translationRead,orderRead}),value:wordlockInput.value,setHint:text=>{wordlockHint.textContent=text},patchState:patch=>{if('photoWordUnlocked'in patch)photoWordUnlocked=patch.photoWordUnlocked},unlockDoor:()=>{wordlockOverlay.hidden=true;const d=roomDoorObjects.find(x=>x.boundary===-16.5);openDoor(d)},update:updateProgress,showToast,restoreLook});
 wordlockOverlay.addEventListener('click',e=>{const b=e.target.closest('[data-letter]');if(!b)return;const v=b.dataset.letter;if(v==='clear')wordlockInput.value='';else if(v==='back')wordlockInput.value=wordlockInput.value.slice(0,-1);else if(wordlockInput.value.length<5)wordlockInput.value+=v;});document.querySelector('#wordlock-submit').addEventListener('click',submitWord);
 document.addEventListener('keydown',e=>{if(!wordlockOverlay.hidden){if(/^(KeyF|KeyO|KeyC|KeyU|KeyS)$/.test(e.code)&&wordlockInput.value.length<5)wordlockInput.value+=e.key.toUpperCase();else if(e.code==='Backspace')wordlockInput.value=wordlockInput.value.slice(0,-1);else if(e.code==='Enter')submitWord();else if(e.code==='Escape')closeOverlay(wordlockOverlay);e.preventDefault();return}if(!keypadOverlay.hidden){if(/^Digit[0-9]$/.test(e.code)&&keypadInput.value.length<4)keypadInput.value+=e.key;else if(e.code==='Backspace')keypadInput.value=keypadInput.value.slice(0,-1);else if(e.code==='Enter')submitKeypad();else if(e.code==='Escape')closeKeypad();e.preventDefault();return}if(cameraMode&&/^Digit[1-5]$/.test(e.code))setFilter(Number(e.code.slice(-1))-1);if(e.code==='KeyQ'&&cameraMode){cameraMode=false;photoHud.hidden=true;document.querySelector('#game').classList.remove('photo-lens-mode','filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber');setFilter(activeFilter);showToast('Camera stowed.')}keys.add(e.code);if(e.code==='Escape'&&started&&!locked)canvas.requestPointerLock?.();if(e.code==='KeyE')interact()});document.addEventListener('keyup',e=>keys.delete(e.code));
 canvas.addEventListener('click',()=>{if(started&&!locked)canvas.requestPointerLock?.()});
 const soundButton=document.querySelector('#sound-toggle');let soundOn=true;
-soundButton.addEventListener('click',()=>{soundOn=!soundOn;document.querySelector('#sound-label').textContent=soundOn?'SOUND ON':'SOUND OFF';if(!soundOn)stopTone();else if(playing)startTone()});
-let audioContext=null,audioSource=null,audioGain=null;
+soundButton.addEventListener('click',()=>{soundOn=!soundOn;document.querySelector('#sound-label').textContent=soundOn?'SOUND ON':'SOUND OFF';if(!soundOn){stopTone();stopAmbient()}else{startAmbient();if(playing)startTone()}});
+let audioContext=null,audioSource=null,audioGain=null,ambientSource=null;
+function startAmbient(){if(!soundOn||ambientSource)return;try{audioContext??=new(window.AudioContext||window.webkitAudioContext)();audioContext.resume();const rate=audioContext.sampleRate,bpm=72,beat=60/bpm,length=Math.round(rate*beat*16),buffer=audioContext.createBuffer(1,length,rate),samples=buffer.getChannelData(0),chords=[[220,261.63,329.63,392],[196,246.94,293.66,369.99],[174.61,220,261.63,349.23],[196,246.94,293.66,349.23]],roots=[55,49,43.65,49];let seed=23;const noise=()=>{seed=(seed*16807)%2147483647;return seed/2147483647*2-1};for(let i=0;i<length;i++){const t=i/rate,beatAt=t/beat,bar=Math.floor(beatAt/4)%4,beatPhase=beatAt%1,eighthPhase=(beatAt*2)%1,chord=chords[bar];let value=0;const pluck=Math.exp(-eighthPhase*8)*(eighthPhase<.45?1:0);for(let n=0;n<chord.length;n++){const f=chord[n],phase=(t+(n%2)*.007)%4;value+=pluck*(Math.sin(2*Math.PI*f*phase)+.19*Math.sin(4*Math.PI*f*phase)+.045*Math.sin(6*Math.PI*f*phase))*(n===0?.075:.039)}const bassEnv=Math.min(1,beatPhase*18)*Math.exp(-beatPhase*2.2);value+=Math.sin(2*Math.PI*roots[bar]*t)*bassEnv*.1;const kickPhase=beatAt%1;if(kickPhase<.22){const e=Math.exp(-kickPhase*22);value+=Math.sin(2*Math.PI*(48+48*Math.exp(-kickPhase*18))*t)*e*.19}const beatInBar=Math.floor(beatAt)%4,snarePhase=(beatInBar===1||beatInBar===3)?beatPhase:1;if(snarePhase<.16){const e=Math.exp(-snarePhase*28);value+=noise()*e*.04+noise()*e*.018}const hatPhase=(beatAt*2)%1;if(hatPhase<.045)value+=noise()*.018*Math.exp(-hatPhase*65);value+=noise()*.002;const edge=Math.min(1,t/.025,(length/rate-t)/.025);samples[i]=value*Math.max(0,edge)}ambientSource=audioContext.createBufferSource();ambientSource.buffer=buffer;ambientSource.loop=true;const gain=audioContext.createGain();gain.gain.value=.5;const filter=audioContext.createBiquadFilter();filter.type='lowpass';filter.frequency.value=5200;ambientSource.connect(filter).connect(gain).connect(audioContext.destination);ambientSource.start()}catch{}}
+function stopAmbient(){if(ambientSource){try{ambientSource.stop()}catch{}ambientSource.disconnect();ambientSource=null}}
 function makeTrackBuffer(reverse){const rate=audioContext.sampleRate,length=rate*3,buffer=audioContext.createBuffer(1,length,rate),samples=buffer.getChannelData(0),notes=[55,65.4,73.4,82.4,73.4,65.4,55,82.4],step=3/notes.length;let peak=0;for(let i=0;i<length;i++){const time=i/rate,index=Math.floor(time/step),local=time%step,env=Math.min(1,local*16)*Math.min(1,(step-local)*9),f=notes[index];samples[i]=(.24*Math.sin(2*Math.PI*f*local)+.08*Math.sin(2*Math.PI*f*2*local)+.035*Math.sin(2*Math.PI*f*3*local))*env;peak=Math.max(peak,Math.abs(samples[i]));}const scale=.88/Math.max(peak,.001);for(let i=0;i<length;i++)samples[i]*=scale;if(reverse)samples.reverse();return buffer;}
 function startTone(){if(!soundOn)return;try{audioContext??=new(window.AudioContext||window.webkitAudioContext)();audioContext.resume();stopTone();audioGain??=audioContext.createGain();audioGain.gain.value=.9;audioGain.connect(audioContext.destination);audioSource=audioContext.createBufferSource();audioSource.buffer=makeTrackBuffer(reversePlayback);audioSource.loop=true;audioSource.connect(audioGain);audioSource.start();}catch{}}
 function stopTone(){if(audioSource){try{audioSource.stop()}catch{}audioSource.disconnect();audioSource=null;}}
@@ -282,23 +296,26 @@ function tick(){
   if(move.lengthSq()){
     move.normalize().multiplyScalar(dt*(keys.has('ShiftLeft')?3.6:2.3));
     const blockedBySafe=(x,z)=>x>3.1&&x<4.7&&z>-3.68&&z<-1.92;
+    const insideOpenDoorway=(x,z)=>roomDoorObjects.some(door=>door.isOpen&&Math.abs(x-door.openingX)<door.openingHalfWidth-.24&&Math.abs(z-door.boundary)<.4);
+    const blockedByObject=(x,z)=>!insideOpenDoorway(x,z)&&solidBounds.some(bounds=>x>bounds.minX-.25&&x<bounds.maxX+.25&&z>bounds.minZ-.25&&z<bounds.maxZ+.25);
     const nextX=THREE.MathUtils.clamp(camera.position.x+move.x,-4.55,4.55);
-    if(!blockedBySafe(nextX,camera.position.z))camera.position.x=nextX;
-    const nextZ=THREE.MathUtils.clamp(camera.position.z+move.z,-27.03,5.05);
-    if(!blockedBySafe(camera.position.x,nextZ))camera.position.z=nextZ;
+    if(!blockedBySafe(nextX,camera.position.z)&&!blockedByObject(nextX,camera.position.z))camera.position.x=nextX;
+    const nextZ=THREE.MathUtils.clamp(camera.position.z+move.z,-29,5.05);
+    if(!blockedBySafe(camera.position.x,nextZ)&&!blockedByObject(camera.position.x,nextZ))camera.position.z=nextZ;
     for(const door of roomDoorObjects){
       const crossed=(previousZ>door.boundary&&camera.position.z<=door.boundary)||(previousZ<door.boundary&&camera.position.z>=door.boundary);
-      if(crossed&&(!door.isOpen||Math.abs(camera.position.x-4.02)>.95))camera.position.z=previousZ>door.boundary?door.boundary+.45:door.boundary-.45;
+      if(crossed&&(!door.isOpen||Math.abs(camera.position.x-door.openingX)>door.openingHalfWidth-.24))camera.position.z=previousZ>door.boundary?door.boundary+.35:door.boundary-.35;
     }
+    if(previousZ>=-27.5&&camera.position.z< -27.5){if(Math.abs(camera.position.x)>.68||!window.__reelRoom03ExitOpen){camera.position.z=-27.05;}else ROOMS[2].walkThroughExit?.();}
   }
   camera.position.y=1.62;syncRoomIndex();
   const target=nearest();prompt.classList.toggle('visible',!!target);
-  if(target){const door=roomDoorObjects.find(item=>item.mesh===target);const names={'jammed drawer':drawerOpen?'TAKE KEY':'OPEN DRAWER','drawer key':'TAKE BRASS KEY','safe door':safeOpen?'SAFE OPEN':hasKey?'UNLOCK SAFE':'SAFE — KEY REQUIRED','safe vinyl':'TAKE VINYL','turntable':vinylPlaced?(playing?'STOP RECORD':'PLAY RECORD'):hasVinyl?'PLACE VINYL':'TURNTABLE — NO RECORD','reverse switch':`REVERSE: ${reversePlayback?'ON':'OFF'}`,'room keypad':'ENTER ACCESS CODE','mixing console':'INSPECT MIXER','brightness switch':photoBright?'SWITCH OFF WORK LIGHT':'RAISE WORK LIGHT','photo camera':'PICK UP CAMERA','translation poster':'INSPECT PRINT A','order poster':'INSPECT PRINT B','word lock':'ENTER WORD','photo painting':'INSPECT PAINTING','framed canvas':'INSPECT STUDY','art studio exit':'CHECK EXIT'};promptLabel.textContent=door?(door.isOpen?'WALK THROUGH DOOR':camera.position.z>door.boundary?'E OPEN CYAN DOOR':'E OPEN MAGENTA RETURN'):(names[target.name]||'INSPECT');}
+  if(target){const door=roomDoorObjects.find(item=>item.mesh===target);const names={'jammed drawer':drawerOpen?'TAKE KEY':'OPEN DRAWER','drawer key':'TAKE BRASS KEY','safe door':safeOpen?'SAFE OPEN':hasKey?'UNLOCK SAFE':'SAFE — KEY REQUIRED','safe vinyl':'TAKE VINYL','turntable':vinylPlaced?(playing?'STOP RECORD':'PLAY RECORD'):hasVinyl?'PLACE VINYL':'TURNTABLE — NO RECORD','reverse switch':`REVERSE: ${reversePlayback?'ON':'OFF'}`,'room keypad':'ENTER ACCESS CODE','mixing console':'INSPECT MIXER','brightness switch':photoBright?'SWITCH OFF WORK LIGHT':'RAISE WORK LIGHT','photo camera':'PICK UP CAMERA','word lock':'ENTER WORD','photo painting':'INSPECT PAINTING','framed canvas':'INSPECT STUDY','art studio exit':'CHECK EXIT'};promptLabel.textContent=door?(door.isOpen?'WALK THROUGH DOOR':camera.position.z>door.boundary?'E OPEN CYAN DOOR':'E OPEN MAGENTA RETURN'):(names[target.name]||'INSPECT');}
   const drawerPrev=drawer.position.z,drawerTarget=drawerOpen?-1.04:-1.73;drawer.position.z+=(drawerTarget-drawer.position.z)*(1-Math.exp(-dt*8));const drawerDelta=drawer.position.z-drawerPrev;
   drawerFace.position.z=drawer.position.z+.405;drawerPull.position.z=drawer.position.z+.45;drawerSideA.position.z=drawer.position.z;drawerSideB.position.z=drawer.position.z;
   for(const part of [drawerKey,keyHead,keyToothA,keyToothB,keyMarker,keyGlow])part.position.z+=drawerDelta;
   const animBlend=1-Math.exp(-dt*6);safePivot.rotation.y+=((safeOpen?-Math.PI/2:0)-safePivot.rotation.y)*animBlend;
-  for(const door of roomDoorObjects)if(door.boundary===-5.5)door.pivot.rotation.y+=(door.targetAngle-door.pivot.rotation.y)*animBlend;
+  for(const door of roomDoorObjects)door.pivot.rotation.y+=(door.targetAngle-door.pivot.rotation.y)*animBlend;
   const wantedSpin=playing?3.49:0;recordSpinSpeed+=(wantedSpin-recordSpinSpeed)*animBlend;recordGroup.rotation.y+=dt*recordSpinSpeed;recordGroup.scale.lerp(new THREE.Vector3(1,1,1),animBlend);
   arm.position.y+=( (playing?1.48:1.61)-arm.position.y)*animBlend;
   if(keyMarker.visible)keyMarker.position.y=1.16+Math.sin(clock.elapsedTime*2.4)*.025;if(vinylMarker.visible)vinylMarker.position.y=2.18+Math.sin(clock.elapsedTime*2.1)*.045;dust.rotation.y+=dt*.008;renderer.render(scene,camera);

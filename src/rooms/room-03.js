@@ -210,14 +210,20 @@ function finishGame() {
   exitUnlocked = true;
   if (exitDoorGroup) exitDoorGroup.rotation.y = -Math.PI / 2;
   window.__reelRoom03ExitOpen = true;
-  showRoomOverlay('PASSAGE OPEN', 'Your study has opened the final door. Reach it and interact to finish the game.', 'CONTINUE', closeEditor);
+  showRoomOverlay('PASSAGE OPEN', 'The final door is open. Walk through it to finish the game.', 'CONTINUE', closeEditor);
+}
+
+function openExitDoor() {
+  if (!exitUnlocked) return false;
+  if (exitDoorGroup) exitDoorGroup.rotation.y = -Math.PI / 2;
+  return true;
 }
 
 function winGame() {
   if (gameWon) return;
   gameWon = true;
   window.__reelRoom03Won = true;
-  showRoomOverlay('GAME COMPLETE', 'The final study is complete. You made it through the studio.', 'FINISH', () => {});
+  showRoomOverlay('GAME COMPLETE', 'Thanks for playing. You have finished the game.', 'FINISH', () => {});
 }
 
 function createEditor() {
@@ -542,10 +548,11 @@ export const room03 = {
   interact(name, ctx) {
     if (name === 'framed canvas') { easelEditor.hidden = false; easelEditor.style.display = 'grid'; editorOpen = true; document.exitPointerLock?.(); return true; }
     if (name === 'art studio exit') {
-      if (exitUnlocked) { winGame(); ctx.showToast('The final door opens. Game complete.'); }
+      if (exitUnlocked) { openExitDoor(); ctx.showToast('The final door is open. Walk through it.'); }
       else ctx.showToast('Complete the form study to open the exit.');
       return true;
     }
     return false;
-  }
+  },
+  walkThroughExit() { if (exitUnlocked) winGame(); }
 };

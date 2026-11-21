@@ -307,13 +307,15 @@ export const room02 = {
       }
     };
     planter(-4.35, -6.45);
-    planter(4.35, -6.45);
+    // Keep the entrance portal clear so the player can step through before
+    // navigating around the furniture on the right side of the lab.
+    planter(4.35, -8.1);
     planter(-4.35, -15.45);
     planter(4.55, -13.1);
 
   },
   interact(name, ctx) {
-    const target = ({brightness:'brightness switch',photoCamera:'photo camera',contactSheet:'translation poster',orderPoster:'order poster',wordlock:'word lock'})[name] || name;
+    const target = ({brightness:'brightness switch',photoCamera:'photo camera',wordlock:'word lock'})[name] || name;
     const s=ctx.getState(),v=ctx.visual;
     switch(target){
       case 'brightness switch':
@@ -336,8 +338,6 @@ export const room02 = {
           }
         }
         ctx.showToast('Camera ready. Change lenses 1–5 to reveal details in the large painting. Press E to record each view.');break;
-      case 'translation poster':ctx.patchState({translationRead:true});ctx.showTranslation();break;
-      case 'order poster':ctx.patchState({orderRead:true});ctx.showOrder();break;
       case 'word lock':ctx.openWordlock();break;
       case 'photo painting':
         if(!s.cameraMode){ctx.showToast('Pick up the camera to inspect the painting through its lenses.');break;}
@@ -349,13 +349,13 @@ export const room02 = {
   },
   openWordlock(ctx) {
     const s=ctx.getState();
-    ctx.setHint(s.photoFound.size===5&&s.translationRead&&s.orderRead?'The sequence is ready.':'Inspect the wall prints first.');
+    ctx.setHint(s.photoFound.size===5?'All five details recorded. Enter FOCUS.':'Record all five painting details first.');
     ctx.openOverlay();
     document.querySelector('#wordlock-input')?.focus();
   },
   submitWord(ctx) {
     const s=ctx.getState();
-    if(s.photoFound.size<5||!s.translationRead||!s.orderRead){ctx.setHint('The image record is incomplete.');return false;}
+    if(s.photoFound.size<5){ctx.setHint('Record all five painting details first.');return false;}
     if(ctx.value!=='FOCUS'){ctx.setHint('That combination does not fit.');return false;}
     ctx.patchState({photoWordUnlocked:true});ctx.unlockDoor();ctx.update();ctx.showToast('The latch releases.');ctx.restoreLook();return true;
   }
