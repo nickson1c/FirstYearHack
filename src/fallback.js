@@ -1,4 +1,5 @@
 // Small dependency-free software 3D renderer, used when the Three.js CDN cannot load.
+import { ROOMS } from './rooms/index.js';
 (() => {
   const canvas = document.querySelector('#offline-scene');
   const context = canvas.getContext('2d');
@@ -25,11 +26,7 @@
   shuffle(letterKeys).forEach(button=>wordKeys.insertBefore(button,wordKeys.querySelector('.keypad-alt')));
   let currentDoorFace = null;
   let currentFaceCondition = null;
-  const roomSigns = [
-    {x:-3.25,y:3.45,z:-5.05,title:'MUSIC ROOM',detail:'01 / TURNTABLE + TAPE',accent:'#20dfff'},
-    {x:-3.25,y:3.45,z:-16.05,title:'PHOTOGRAPHY LAB',detail:'02 / FIVE FILTERS',accent:'#20dfff'},
-    {x:-3.25,y:3.45,z:-27.05,title:'AFTERIMAGE ARCHIVE',detail:'03 / FILM STORAGE',accent:'#ff68d7'}
-  ];
+  const roomSigns = ROOMS.map(room=>({x:-3.25,y:3.45,z:room.endZ+.45,title:room.title,detail:room.detail,accent:room.accent}));
   const fov = Math.PI / 3;
   let roomIndex = 0;
 
@@ -96,9 +93,9 @@
   for(let i=0;i<3;i++)box(3.25+i*.34,.18,-3.7,.24,.32,.24,'#625c50');
 
   // The next two rooms share the same dimensions and doorway positions as the WebGL scene.
-  for(let index=1;index<=2;index++){
+  for(let index=1;index<=3;index++){
     const center=-11*index,back=center-5.5,front=center+5.5;
-    const palette=index===1?['#101b27','#132a38','#16c8e8','#295e80']:['#1b1424','#30203b','#f033ff','#5b3178'];
+    const palette=index===1?['#101b27','#132a38','#16c8e8','#295e80']:index===2?['#1b1424','#30203b','#f033ff','#5b3178']:['#241b23','#382b32','#ff9d45','#9c5648'];
     quad([[-5,0,front],[5,0,front],[5,0,back],[-5,0,back]],palette[0]);
     quad([[-5,5,front],[5,5,front],[5,5,back],[-5,5,back]],'#10141c');
     quad([[-5,0,front],[-5,5,front],[-5,5,back],[-5,0,back]],'#17212d');
@@ -115,9 +112,14 @@
     if(index===1){
       for(const x of [-3.7,3.35]){box(x,1.65,center-1.05,.95,3.1,1.05,'#162a3a','#1c5e7c');for(let row=0;row<7;row++)box(x-.22,0.5+row*.37,center-.44,.07,.055,.025,row%2?'#ed35ff':'#20dfff');}
       for(let z=center+1.5;z>center-4;z-=1.2)box(0,4.55,z,7.8,.06,.22,'#456078');
-    } else {
+    } else if(index===2) {
       for(const y of [1.05,2.05,3.05]){box(-3.55,y,center-1.25,1.65,.09,5.8,'#69516e');for(let n=0;n<6;n++)box(-4.05+(n%3)*.45,y+.23,center-3.3+Math.floor(n/3)*.9,.25,.36,.25,n%2?'#ae7c52':'#806b9b');}
       box(2.8,.9,center-1.8,2.2,1.5,2.5,'#382544','#b64a9c');box(2.8,1.68,center-1.8,.09,.04,1.85,'#ff68d7');
+    } else {
+      const calibration=['#ff4e7a','#ffb84d','#d6e65a','#42dfbd','#4ca6ff','#b66dff'];
+      calibration.forEach((color,i)=>box(-2.5+i,2.72,center-2.8,.76,.54,.045,color));
+      box(1.6,1.12,center+.3,2.9,1.35,1.6,'#35273b','#ff9d45');
+      for(let i=0;i<5;i++)box(.55+i*.45,1.82,center+.3,.18,.035,.78,i%2?'#a254b6':'#3ec8d0');
     }
     box(-1.15,1.35,center-1.5,2.3,.38,.08,'#142535');
     for(let n=0;n<5;n++)box(-2+n*.42,1.38,center-1.44,.12,.035,.02,n%2?'#ee31ff':'#20dfff');
@@ -131,8 +133,8 @@
   box(4.7,2.75,photoZ-4.15,.08,1.85,1.7,'#111a27','#7b9b9c');addTarget('orderPoster',4.7,2.75,photoZ-4.15);
   currentFaceCondition=()=>puzzle.photoBright;box(-1.6,2.35,-16.28,4.55,3.25,.16,'#9b704a');box(-1.6,2.35,-16.18,4.3,3.05,.025,'#1b2935');currentFaceCondition=null;
   addTarget('photoPainting',-1.6,2.35,-16.16,()=>puzzle.photoBright&&puzzle.cameraMode);
-  buildPartition(-16.5,1);
-  quad([[-5,0,-27.5],[5,0,-27.5],[5,5,-27.5],[-5,5,-27.5]],'#382b43');
+  buildPartition(-16.5,1);buildPartition(-27.5,2);
+  quad([[-5,0,-38.5],[5,0,-38.5],[5,5,-38.5],[-5,5,-38.5]],'#382b43');
 
   const project = (p,w,h) => {
     const dx=p[0]-camera.x,dy=p[1]-camera.y,dz=p[2]-camera.z;
@@ -153,16 +155,14 @@
     .sort((a,b)=>Math.hypot(a.screen[0]-w/2,a.screen[1]-h/2)-Math.hypot(b.screen[0]-w/2,b.screen[1]-h/2))
     .find(item=>Math.hypot(item.screen[0]-w/2,item.screen[1]-h/2)<Math.min(item.target.name==='vinyl'?150:item.target.name==='key'?115:item.target.name==='photoPainting'?300:78,w*(item.target.name==='photoPainting'?.32:.16)))?.target;};
   const setRoomUI = () => {
-    const titles=['THE MUSIC ROOM','PHOTOGRAPHY LAB','AFTERIMAGE ARCHIVE'];
-    const details=['01 / TURNTABLE + TAPE','02 / FIVE FILTERS','03 / FILM STORAGE'];
     document.querySelector('#room-number').textContent=`ROOM ${String(roomIndex+1).padStart(2,'0')}`;
-    document.querySelector('#room-title').textContent=titles[roomIndex];
-    document.querySelector('#room-marker-name').textContent=titles[roomIndex];
-    document.querySelector('#room-marker-detail').textContent=details[roomIndex];
-    for(let i=0;i<3;i++){const node=document.querySelector(`#route-node-${i}`);node.classList.toggle('active',i===roomIndex);node.classList.toggle('visited',i<roomIndex);}
-    document.querySelector('#objective-text').textContent=roomIndex===1?(!puzzle.photoBright?'Raise the darkroom brightness switch.':!puzzle.cameraMode?'Pick up the revealed camera.':puzzle.photoFound.size<5?'Use filters to find paintings ('+puzzle.photoFound.size+'/5).':!puzzle.translationRead||!puzzle.orderRead?'Examine the two wall prints.':!puzzle.photoWordUnlocked?'Enter the ordered five-letter word at the exit lock.':'Door unlocked.'):roomIndex===2?'Use the magenta door to return through the room chain.':!puzzle.drawerOpen?'Open the desk drawer and look inside.':!puzzle.hasKey?'Take the brass key from the drawer.':!puzzle.safeOpen?'Use the key on the wall safe.':!(puzzle.hasVinyl||puzzle.vinylPlaced)?'Collect the vinyl from the safe.':!puzzle.vinylPlaced?'Place the vinyl on the turntable.':!puzzle.codeRevealed?'Play the track in reverse to reveal the code.':!puzzle.doorUnlocked?'Enter 6767 on the door keypad.':'Walk through the unlocked cyan door.';
-    document.querySelector('#progress-count').textContent=`${String(roomIndex+1).padStart(2,'0')} / 03`;
-    document.querySelector('#progress-fill').style.width=`${((roomIndex+1)/3)*100}%`;
+    document.querySelector('#room-title').textContent=ROOMS[roomIndex].title;
+    document.querySelector('#room-marker-name').textContent=ROOMS[roomIndex].title;
+    document.querySelector('#room-marker-detail').textContent=ROOMS[roomIndex].detail;
+    for(let i=0;i<ROOMS.length;i++){const node=document.querySelector(`#route-node-${i}`);node.classList.toggle('active',i===roomIndex);node.classList.toggle('visited',i<roomIndex);}
+    document.querySelector('#objective-text').textContent=roomIndex===1?(!puzzle.photoBright?'Raise the darkroom brightness switch.':!puzzle.cameraMode?'Pick up the revealed camera.':puzzle.photoFound.size<5?'Use filters to find paintings ('+puzzle.photoFound.size+'/5).':!puzzle.translationRead||!puzzle.orderRead?'Examine the two wall prints.':!puzzle.photoWordUnlocked?'Enter the ordered five-letter word at the exit lock.':'Walk into the archive.'):roomIndex===2?'Continue through the archive into the color suite.':roomIndex===3?'The four-room route is complete.':!puzzle.drawerOpen?'Open the desk drawer and look inside.':!puzzle.hasKey?'Take the brass key from the drawer.':!puzzle.safeOpen?'Use the key on the wall safe.':!(puzzle.hasVinyl||puzzle.vinylPlaced)?'Collect the vinyl from the safe.':!puzzle.vinylPlaced?'Place the vinyl on the turntable.':!puzzle.codeRevealed?'Play the track in reverse to reveal the code.':!puzzle.doorUnlocked?'Enter 6767 on the door keypad.':'Walk through the unlocked cyan door.';
+    document.querySelector('#progress-count').textContent=`${String(roomIndex+1).padStart(2,'0')} / 04`;
+    document.querySelector('#progress-fill').style.width=`${((roomIndex+1)/4)*100}%`;
   };
   setRoomUI();
   const showToast = message => {const toast=document.querySelector('#toast');toast.textContent=message;toast.classList.add('visible');setTimeout(()=>toast.classList.remove('visible'),2200);};
@@ -170,39 +170,32 @@
   const makeTrack=reverse=>{const rate=audioContext.sampleRate,length=rate*3,buffer=audioContext.createBuffer(1,length,rate),samples=buffer.getChannelData(0),notes=[55,65.4,73.4,82.4,73.4,65.4,55,82.4],step=3/notes.length;for(let i=0;i<length;i++){const time=i/rate,local=time%step,env=Math.min(1,local*16)*Math.min(1,(step-local)*9),f=notes[Math.floor(time/step)];samples[i]=(.24*Math.sin(2*Math.PI*f*local)+.08*Math.sin(2*Math.PI*f*2*local))*env;}if(reverse)samples.reverse();return buffer;};
   const stopTrack=()=>{if(audioSource){try{audioSource.stop()}catch{}audioSource.disconnect();audioSource=null;}};
   const playTrack=()=>{stopTrack();if(!soundOn)return;try{audioContext??=new(window.AudioContext||window.webkitAudioContext)();audioContext.resume();audioSource=audioContext.createBufferSource();audioSource.buffer=makeTrack(puzzle.reverse);audioSource.loop=true;const gain=audioContext.createGain();gain.gain.value=.34;audioSource.connect(gain).connect(audioContext.destination);audioSource.start();}catch{}};
-  const updatePuzzleUI=()=>{document.querySelector('#objective-text').textContent=roomIndex===1?(!puzzle.photoBright?'Raise the darkroom brightness switch.':!puzzle.cameraMode?'Pick up the revealed camera.':puzzle.photoFound.size<5?'Use filters to find paintings ('+puzzle.photoFound.size+'/5).':!puzzle.translationRead||!puzzle.orderRead?'Examine the two wall prints.':!puzzle.photoWordUnlocked?'Enter the ordered five-letter word at the exit lock.':'Door unlocked.'):roomIndex===2?'Use the magenta door to return through the room chain.':!puzzle.drawerOpen?'Open the desk drawer and look inside.':!puzzle.hasKey?'Take the brass key from the drawer.':!puzzle.safeOpen?'Use the key on the wall safe.':!(puzzle.hasVinyl||puzzle.vinylPlaced)?'Collect the vinyl from the safe.':!puzzle.vinylPlaced?'Place the vinyl on the turntable.':!puzzle.codeRevealed?'Play the track in reverse to reveal the code.':!puzzle.doorUnlocked?'Enter 6767 on the door keypad.':'Walk through the unlocked cyan door.';};
+  const updatePuzzleUI=()=>{document.querySelector('#objective-text').textContent=roomIndex===1?(!puzzle.photoBright?'Raise the darkroom brightness switch.':!puzzle.cameraMode?'Pick up the revealed camera.':puzzle.photoFound.size<5?'Use filters to find paintings ('+puzzle.photoFound.size+'/5).':!puzzle.translationRead||!puzzle.orderRead?'Examine the two wall prints.':!puzzle.photoWordUnlocked?'Enter the ordered five-letter word at the exit lock.':'Walk into the archive.'):roomIndex===2?'Continue through the archive into the color suite.':roomIndex===3?'The four-room route is complete.':!puzzle.drawerOpen?'Open the desk drawer and look inside.':!puzzle.hasKey?'Take the brass key from the drawer.':!puzzle.safeOpen?'Use the key on the wall safe.':!(puzzle.hasVinyl||puzzle.vinylPlaced)?'Collect the vinyl from the safe.':!puzzle.vinylPlaced?'Place the vinyl on the turntable.':!puzzle.codeRevealed?'Play the track in reverse to reveal the code.':!puzzle.doorUnlocked?'Enter 6767 on the door keypad.':'Walk through the unlocked cyan door.';};
   const updateRecordLabel=()=>{const display=document.querySelector('#record-label');display.classList.toggle('visible',puzzle.playing||puzzle.codeRevealed);display.querySelector('span').textContent=puzzle.codeRevealed?'REVERSE SIGNAL DECODED':puzzle.reverse?'REVERSE PLAYBACK':'FORWARD PLAYBACK';display.querySelector('strong').textContent=puzzle.codeRevealed?'6767':puzzle.reverse?'REWIND':'—';};
   const keypadOverlay=document.querySelector('#keypad-overlay'),keypadInput=document.querySelector('#keypad-input'),keypadHint=document.querySelector('#keypad-hint');
   const translationOverlay=document.querySelector('#translation-overlay'),translationGrid=document.querySelector('#translation-grid'),orderOverlay=document.querySelector('#order-overlay'),orderSequence=document.querySelector('#order-sequence'),wordlockOverlay=document.querySelector('#wordlock-overlay'),wordlockInput=document.querySelector('#wordlock-input'),wordlockHint=document.querySelector('#wordlock-hint'),photoHud=document.querySelector('#photo-hud');
   const openKeypad=()=>{keypadInput.value='';keypadHint.textContent=puzzle.codeRevealed?'The reversed groove reads 6767. Enter the signal.':'The display is blank. Reverse the record to reveal the signal.';keypadOverlay.hidden=false;document.exitPointerLock?.();};
   const closeKeypad=()=>{if(!active)return;keypadOverlay.hidden=true;canvas.requestPointerLock?.();};
-  const submitCode=()=>{if(!active)return;if(!puzzle.codeRevealed){keypadHint.textContent='Play the vinyl in reverse to reveal the code.';return}if(keypadInput.value!=='6767'){keypadHint.textContent='Incorrect sequence. Listen to the reversed track again.';return}puzzle.doorUnlocked=true;keypadOverlay.hidden=true;const gate=doors.find(item=>item.boundary===-5.5);gate.isOpen=true;updatePuzzleUI();showToast('6767 accepted. The exit bolts retract. Walk through.');canvas.requestPointerLock?.();};
+  const submitCode=()=>ROOMS[0].submitCode({getState:()=>({codeRevealed:puzzle.codeRevealed}),value:keypadInput.value,setHint:text=>{keypadHint.textContent=text},unlockDoor:()=>{puzzle.doorUnlocked=true;keypadOverlay.hidden=true;const gate=doors.find(item=>item.boundary===-5.5);gate.isOpen=true;canvas.requestPointerLock?.()},update:updatePuzzleUI,showToast});
   keypadOverlay.addEventListener('click',e=>{if(!active)return;const key=e.target.closest('[data-key]');if(!key)return;if(key.dataset.key==='clear')keypadInput.value='';else if(key.dataset.key==='back')keypadInput.value=keypadInput.value.slice(0,-1);else if(keypadInput.value.length<4)keypadInput.value+=key.dataset.key;});
   document.querySelector('#keypad-submit').addEventListener('click',submitCode);document.querySelector('#keypad-close').addEventListener('click',closeKeypad);
   const restoreLook=()=>{if(active)canvas.requestPointerLock?.()};
-  const openWordlock=()=>{wordlockInput.value='';wordlockHint.textContent=puzzle.photoFound.size===5&&puzzle.translationRead&&puzzle.orderRead?'The sequence is ready.':'Inspect the wall prints first.';wordlockOverlay.hidden=false;document.exitPointerLock?.();};
-  const submitWord=()=>{if(puzzle.photoFound.size<5||!puzzle.translationRead||!puzzle.orderRead){wordlockHint.textContent='The image record is incomplete.';return}if(wordlockInput.value!=='FOCUS'){wordlockHint.textContent='That combination does not fit.';return}puzzle.photoWordUnlocked=true;wordlockOverlay.hidden=true;const gate=doors.find(d=>d.boundary===-16.5);gate.isOpen=true;updatePuzzleUI();showToast('The latch releases.');restoreLook();};
+  const submitWord=()=>ROOMS[1].submitWord({getState:()=>({...puzzle}),value:wordlockInput.value,setHint:text=>{wordlockHint.textContent=text},patchState:patch=>Object.assign(puzzle,patch),unlockDoor:()=>{wordlockOverlay.hidden=true;const gate=doors.find(d=>d.boundary===-16.5);gate.isOpen=true},update:updatePuzzleUI,showToast,restoreLook});
   wordlockOverlay.addEventListener('click',e=>{const b=e.target.closest('[data-letter]');if(!b)return;const v=b.dataset.letter;if(v==='clear')wordlockInput.value='';else if(v==='back')wordlockInput.value=wordlockInput.value.slice(0,-1);else if(wordlockInput.value.length<5)wordlockInput.value+=v;});document.querySelector('#wordlock-submit').addEventListener('click',submitWord);document.querySelector('#wordlock-close').addEventListener('click',()=>{wordlockOverlay.hidden=true;restoreLook()});
   translationOverlay.addEventListener('click',e=>{if(e.target.closest('#translation-close')){translationOverlay.hidden=true;restoreLook()}});orderOverlay.addEventListener('click',e=>{if(e.target.closest('#order-close')){orderOverlay.hidden=true;restoreLook()}});
   photoHud.addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;puzzle.activeFilter=Number(b.dataset.filter);photoHud.querySelectorAll('[data-filter]').forEach(el=>el.classList.toggle('active',el===b));document.querySelector('#game').classList.remove('filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber');document.querySelector('#game').classList.add(['filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber'][puzzle.activeFilter]);document.querySelector('#photo-filter-name').textContent=['INFRARED','NEGATIVE','ULTRAVIOLET','CYANOGRAPH','AMBER'][puzzle.activeFilter];document.querySelector('#game').classList.remove('filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber');document.querySelector('#game').classList.add(['filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber'][puzzle.activeFilter]);});
   document.addEventListener('keydown',e=>{if(!active)return;if(!wordlockOverlay.hidden){if(/^(KeyF|KeyO|KeyC|KeyU|KeyS)$/.test(e.code)&&wordlockInput.value.length<5)wordlockInput.value+=e.key.toUpperCase();else if(e.code==='Backspace')wordlockInput.value=wordlockInput.value.slice(0,-1);else if(e.code==='Enter')submitWord();else if(e.code==='Escape'){wordlockOverlay.hidden=true;restoreLook()}e.preventDefault();e.stopImmediatePropagation();return}if(!translationOverlay.hidden||!orderOverlay.hidden){if(e.code==='Escape'){translationOverlay.hidden=true;orderOverlay.hidden=true;restoreLook()}e.preventDefault();e.stopImmediatePropagation();return}if(puzzle.cameraMode&&/^Digit[1-5]$/.test(e.code)){puzzle.activeFilter=Number(e.code.slice(-1))-1;document.querySelector('#game').classList.remove('filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber');document.querySelector('#game').classList.add(['filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber'][puzzle.activeFilter]);photoHud.querySelectorAll('[data-filter]').forEach((b,i)=>b.classList.toggle('active',i===puzzle.activeFilter));document.querySelector('#photo-filter-name').textContent=['INFRARED','NEGATIVE','ULTRAVIOLET','CYANOGRAPH','AMBER'][puzzle.activeFilter];document.querySelector('#game').classList.remove('filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber');document.querySelector('#game').classList.add(['filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber'][puzzle.activeFilter]);e.preventDefault()}if(e.code==='KeyQ'&&puzzle.cameraMode){puzzle.cameraMode=false;photoHud.hidden=true;document.querySelector('#game').classList.remove('photo-lens-mode','filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber');showToast('Camera stowed.')}});
   const activateTarget=target=>{
-    switch(target.name){
-      case'brightness':puzzle.photoBright=!puzzle.photoBright;if(!puzzle.photoBright){puzzle.cameraMode=false;photoHud.hidden=true;document.querySelector('#game').classList.remove('photo-lens-mode','filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber')}updatePuzzleUI();showToast(puzzle.photoBright?'Work light on. The camera is lit on the bench; aim at it and press E.':'Darkroom lights off.');break;
-      case'photoCamera':puzzle.cameraMode=true;photoHud.hidden=false;document.querySelector('#game').classList.add('photo-lens-mode');document.querySelector('#game').classList.add(['filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber'][puzzle.activeFilter]);showToast('Camera ready. Change lenses 1–5 to reveal details in the large painting. Press E to record each view.');break;
-      case'contactSheet':puzzle.translationRead=true;translationGrid.replaceChildren(...photoTranslationEntries.flatMap(({glyph,letter})=>{const symbol=document.createElement('span'),value=document.createElement('b');symbol.textContent=String.fromCharCode(glyph);value.textContent=letter;return [symbol,value]}));translationOverlay.hidden=false;document.exitPointerLock?.();updatePuzzleUI();break;
-      case'orderPoster':puzzle.orderRead=true;orderSequence.textContent=photoFilterOrder.map((filter,i)=>`${filter}  ${String.fromCharCode(photoGlyphCodes[i])}`).join('     ');orderOverlay.hidden=false;document.exitPointerLock?.();updatePuzzleUI();break;
-      case'wordlock':openWordlock();break;
-      case'photoPainting':if(!puzzle.cameraMode){showToast('Pick up the camera to inspect the painting through its lenses.');break}if(puzzle.photoFound.has(puzzle.activeFilter)){showToast('This lens print is already recorded. Try another filter.');break}puzzle.photoFound.add(puzzle.activeFilter);document.querySelector('#symbol-count').textContent=`${puzzle.photoFound.size} / 5 SYMBOLS`;updatePuzzleUI();showToast(`Painting detail recorded (${puzzle.photoFound.size}/5).`);break;
-      case'drawer':puzzle.drawerOpen=true;updatePuzzleUI();showToast('The drawer slides open. There is a brass key inside.');break;
-      case'key':puzzle.hasKey=true;updatePuzzleUI();showToast('Brass key collected. Find the wall safe.');break;
-      case'safe':if(!puzzle.hasKey){showToast('The safe is locked. Look inside the desk drawer.');break}puzzle.safeOpen=true;safeFace.isOpen=true;updatePuzzleUI();showToast('The safe opens. A vinyl is inside.');break;
-      case'vinyl':puzzle.hasVinyl=true;updatePuzzleUI();showToast('Vinyl collected. Put it on the turntable.');break;
-      case'turntable':if(!puzzle.vinylPlaced){if(!puzzle.hasVinyl){showToast('Find the vinyl in the safe first.');break}puzzle.hasVinyl=false;puzzle.vinylPlaced=true;showToast('Vinyl placed. The reverse switch is beside the platter.');}else{puzzle.playing=!puzzle.playing;if(puzzle.playing){playTrack();if(puzzle.reverse){puzzle.codeRevealed=true;showToast('The reversed groove resolves into 6767.');}else showToast('Needle down. The forward track is distorted.');}else{stopTrack();showToast('Playback paused.');}updateRecordLabel();}updatePuzzleUI();break;
-      case'reverse':if(!puzzle.vinylPlaced){showToast('Place the vinyl on the turntable first.');break}puzzle.reverse=!puzzle.reverse;if(puzzle.playing){playTrack();if(puzzle.reverse){puzzle.codeRevealed=true;showToast('Reverse playback reveals 6767.');}}else showToast(puzzle.reverse?'Playback direction set to reverse.':'Playback direction set to forward.');updateRecordLabel();updatePuzzleUI();break;
-      case'keypad':openKeypad();break;
-      default:break;
-    }
+    const handled=ROOMS[roomIndex].interact?.(target.name,{
+      getState:()=>({...puzzle}),patchState:patch=>Object.assign(puzzle,patch),showToast,update:updatePuzzleUI,openKeypad:()=>openKeypad(),
+      startAudio:playTrack,stopAudio:stopTrack,updateRecordLabel,
+      visual:{setBrightness:on=>{if(!on){photoHud.hidden=true;document.querySelector('#game').classList.remove('photo-lens-mode','filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber')}},setCameraMode:on=>{photoHud.hidden=!on;if(on){const game=document.querySelector('#game');game.classList.add('photo-lens-mode',['filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber'][puzzle.activeFilter]);}}},
+      showTranslation:()=>{translationGrid.replaceChildren(...photoTranslationEntries.flatMap(({glyph,letter})=>{const symbol=document.createElement('span'),value=document.createElement('b');symbol.textContent=String.fromCharCode(glyph);value.textContent=letter;return [symbol,value]}));translationOverlay.hidden=false;document.exitPointerLock?.()},
+      showOrder:()=>{orderSequence.textContent=photoFilterOrder.map((filter,i)=>`${filter}  ${String.fromCharCode(photoGlyphCodes[i])}`).join('     ');orderOverlay.hidden=false;document.exitPointerLock?.()},
+      openWordlock:()=>ROOMS[1].openWordlock({getState:()=>({...puzzle}),openOverlay:()=>{wordlockInput.value='';wordlockOverlay.hidden=false;document.exitPointerLock?.()},setHint:text=>{wordlockHint.textContent=text}}),updateSymbolCount:n=>{document.querySelector('#symbol-count').textContent=`${n} / 5 SYMBOLS`;}
+    });
+    if(handled){updatePuzzleUI();return;}
+    if(!handled)showToast('A piece of the room.');
   };
   const resize=()=>{const r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,1.75);canvas.width=Math.floor(r.width*dpr);canvas.height=Math.floor(r.height*dpr);context.setTransform(dpr,0,0,dpr,0,0);};
   let last=0;
@@ -211,7 +204,7 @@
     const w=canvas.clientWidth,h=canvas.clientHeight,dt=Math.min((time-last)/1000||0,.04);last=time;
     const forwardX=-Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=-Math.sin(yaw);
     let mx=0,mz=0;if(keys.has('KeyW')){mx+=forwardX;mz+=forwardZ}if(keys.has('KeyS')){mx-=forwardX;mz-=forwardZ}if(keys.has('KeyD')){mx+=rightX;mz+=rightZ}if(keys.has('KeyA')){mx-=rightX;mz-=rightZ}
-    const previousZ=camera.z,length=Math.hypot(mx,mz);if(length){const speed=(keys.has('ShiftLeft')?3.6:2.4)*dt,nextX=Math.max(-4.55,Math.min(4.55,camera.x+mx/length*speed)),nextZ=Math.max(-27.03,Math.min(5.05,camera.z+mz/length*speed));const blockedBySafe=(x,z)=>x>3.1&&x<4.7&&z>-3.68&&z<-1.92;if(!blockedBySafe(nextX,camera.z))camera.x=nextX;if(!blockedBySafe(camera.x,nextZ))camera.z=nextZ;for(const door of doors){const crossed=(previousZ>door.boundary&&camera.z<=door.boundary)||(previousZ<door.boundary&&camera.z>=door.boundary);if(crossed&&(!door.isOpen||Math.abs(camera.x-4.02)>.95))camera.z=previousZ>door.boundary?door.boundary+.45:door.boundary-.45;}const next=camera.z>-5.5?0:camera.z>-16.5?1:2;if(next!==roomIndex){roomIndex=next;setRoomUI();showToast(`Entered room ${String(roomIndex+1).padStart(2,'0')}.`);}}
+    const previousZ=camera.z,length=Math.hypot(mx,mz);if(length){const speed=(keys.has('ShiftLeft')?3.6:2.4)*dt,nextX=Math.max(-4.55,Math.min(4.55,camera.x+mx/length*speed)),nextZ=Math.max(-38.03,Math.min(5.05,camera.z+mz/length*speed));const blockedBySafe=(x,z)=>x>3.1&&x<4.7&&z>-3.68&&z<-1.92;if(!blockedBySafe(nextX,camera.z))camera.x=nextX;if(!blockedBySafe(camera.x,nextZ))camera.z=nextZ;for(const door of doors){const crossed=(previousZ>door.boundary&&camera.z<=door.boundary)||(previousZ<door.boundary&&camera.z>=door.boundary);if(crossed&&(!door.isOpen||Math.abs(camera.x-4.02)>.95))camera.z=previousZ>door.boundary?door.boundary+.45:door.boundary-.45;}const next=camera.z>-5.5?0:camera.z>-16.5?1:camera.z>-27.5?2:3;if(next!==roomIndex){roomIndex=next;setRoomUI();showToast(`Entered room ${String(roomIndex+1).padStart(2,'0')}.`);}}
     context.clearRect(0,0,w,h);
     const sky=context.createLinearGradient(0,0,0,h);sky.addColorStop(0,'#172538');sky.addColorStop(.48,'#263344');sky.addColorStop(1,'#1b202b');context.fillStyle=sky;context.fillRect(0,0,w,h);
     const sorted=[];
