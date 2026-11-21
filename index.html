@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#090b0d" />
-  <title>REEL // SCORE — Projection Room</title>
+  <title>REEL // SCORE - Projection Room</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -61,6 +61,23 @@
         </div>
         <button id="keypad-submit" class="keypad-submit">UNLOCK DOOR <span>↗</span></button>
       </div>
+    </section>
+    <section class="photo-hud" id="photo-hud" hidden aria-label="Camera filter controls">
+      <div class="photo-hud-head"><span class="photo-rec-dot"></span> CAMERA LIVE <span id="photo-filter-name">INFRARED</span></div>
+      <div class="photo-filters">
+        <button data-filter="0" class="active"><kbd>1</kbd><span>IR</span></button>
+        <button data-filter="1"><kbd>2</kbd><span>NEG</span></button>
+        <button data-filter="2"><kbd>3</kbd><span>UV</span></button>
+        <button data-filter="3"><kbd>4</kbd><span>CYAN</span></button>
+        <button data-filter="4"><kbd>5</kbd><span>AMBER</span></button>
+      </div>
+      <div class="photo-hud-foot"><span>AIM + <b>E</b> CAPTURE SYMBOL</span><span><b>Q</b> STOW CAMERA</span><span id="symbol-count">0 / 5 SYMBOLS</span></div>
+    </section>
+    <section class="translation-overlay" id="translation-overlay" hidden aria-label="Symbol translation chart">
+      <div class="translation-card"><button class="keypad-close" id="translation-close" aria-label="Close chart">×</button><div class="eyebrow">DARKROOM REFERENCE</div><h2>Contact sheet</h2><p>Match each captured mark to its letter.</p><div class="translation-grid"><span>△</span><b>F</b><span>◉</span><b>O</b><span>⌁</span><b>C</b><span>✣</span><b>U</b><span>◇</span><b>S</b></div><div class="start-foot">FIVE FRAMES · READ LEFT TO RIGHT</div></div>
+    </section>
+    <section class="wordlock-overlay" id="wordlock-overlay" hidden aria-label="Photography lab word lock">
+      <div class="wordlock-card"><button class="keypad-close" id="wordlock-close" aria-label="Close word lock">×</button><div class="eyebrow">PHOTOGRAPHY LAB EXIT</div><h2>Frame lock</h2><p id="wordlock-hint">Capture and translate all five symbols first.</p><input id="wordlock-input" aria-label="Five letter password" maxlength="5" readonly value="" /><div class="wordlock-keys"><button data-letter="F">F</button><button data-letter="O">O</button><button data-letter="C">C</button><button data-letter="U">U</button><button data-letter="S">S</button><button data-letter="clear" class="keypad-alt">CLR</button><button data-letter="back" class="keypad-alt">⌫</button></div><button id="wordlock-submit" class="keypad-submit">UNLOCK NEXT ROOM <span>↗</span></button></div>
     </section>
     <aside class="controls"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> MOVE</span><span><kbd>MOUSE</kbd> LOOK</span><span><kbd>E</kbd> INTERACT</span><span><kbd>ESC</kbd> RELEASE</span></aside>
     <div class="toast" id="toast" role="status"></div>

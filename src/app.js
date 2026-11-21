@@ -34,6 +34,10 @@ function box(name, x,y,z, sx,sy,sz, material, target=false) {
 }
 const interactables=[];
 const roomDoorObjects=[];
+const photoSymbols=[];
+let photoLight=null,photoFillLight=null,photoCamera=null;
+let photoBright=false,cameraMode=false,activeFilter=0,translationRead=false,photoWordUnlocked=false;
+const photoFound=new Set();
 function buildDoorway(z,boundaryIndex){
   const openingX=4.02,openingWidth=1.6,leftEdge=openingX-openingWidth/2,rightEdge=openingX+openingWidth/2;
   const material=mat(boundaryIndex===0?'#252d3a':'#252239',.65,.3);
@@ -44,7 +48,8 @@ function buildDoorway(z,boundaryIndex){
   box('cyan door frame',openingX,3.02,z+.16,1.62,.05,.08,cyan);
   box('magenta door frame',openingX,3.02,z-.16,1.62,.05,.08,magenta);
   box('door handle',openingX-.55,1.48,z+.09,.06,.16,.06,brass);
-  if(boundaryIndex===0){const keypad=box('room keypad',3.02,1.48,z+.22,.24,.82,.1,black,true);box('keypad display',3.02,1.75,z+.16,.16,.12,.025,cyan);for(let row=0;row<3;row++)for(let col=0;col<3;col++)box('keypad button',2.97+col*.05,1.55-row*.11,z+.14,.025,.025,.02,cream);}
+  if(boundaryIndex===0){box('room keypad',3.02,1.48,z+.22,.24,.82,.1,black,true);box('keypad display',3.02,1.75,z+.16,.16,.12,.025,cyan);for(let row=0;row<3;row++)for(let col=0;col<3;col++)box('keypad button',2.97+col*.05,1.55-row*.11,z+.14,.025,.025,.02,cream);}
+  if(boundaryIndex===1){box('word lock',3.02,1.48,z+.22,.24,.82,.1,black,true);box('word lock display',3.02,1.75,z+.16,.16,.12,.025,magenta);for(let n=0;n<5;n++)box('word lock key',2.94+n*.04,1.48,z+.14,.025,.08,.02,cream);}
   roomDoorObjects.push({mesh:door,boundary:z,from:boundaryIndex,to:boundaryIndex+1,isOpen:false});
 }
 function addRoomSign(title,subtitle,accent,x,y,z){
@@ -64,6 +69,7 @@ function makePickupMarker(text,color){
   const texture=new THREE.CanvasTexture(art);texture.colorSpace=THREE.SRGBColorSpace;
   const marker=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:true}));marker.scale.set(1.25,.36,1);scene.add(marker);marker.visible=false;return marker;
 }
+function makeGlyphSprite(glyph,color){const art=document.createElement('canvas');art.width=256;art.height=256;const ctx=art.getContext('2d');ctx.clearRect(0,0,256,256);ctx.shadowColor=color;ctx.shadowBlur=28;ctx.fillStyle=color;ctx.font='bold 174px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(glyph,128,132);const texture=new THREE.CanvasTexture(art);texture.colorSpace=THREE.SRGBColorSpace;const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:true}));sprite.scale.set(.78,.78,1);sprite.visible=false;scene.add(sprite);return sprite;}
 
 // A compact 1970s booth: warm practical light, dark walnut, dusty concrete, and a projector beam.
 box('floor',0,-.12,0,10,.24,11,mat('#1b2635',.48,.34));
@@ -152,25 +158,38 @@ function buildConnectedRoom(index){
   const glow=new THREE.PointLight(index===1?'#20dcff':'#ec54ff',42,15,2);glow.position.set(0,3.6,centerZ);scene.add(glow);
   const fill=new THREE.PointLight(index===1?'#399dff':'#ff9c53',22,12,2);fill.position.set(index===1?3:-3,2.7,centerZ-2);scene.add(fill);
   box('room sign backing',-3.35,3.45,backZ+.16,2.75,1.02,.08,black);
-  addRoomSign(index===1?'SIGNAL CONTROL':'AFTERIMAGE ARCHIVE',index===1?'02 / LIVE ROUTING':'03 / FILM STORAGE',index===1?'#20dfff':'#ff68d7',-3.35,3.45,backZ+.21);
+  addRoomSign(index===1?'PHOTOGRAPHY LAB':'AFTERIMAGE ARCHIVE',index===1?'02 / FIVE FILTERS':'03 / FILM STORAGE',index===1?'#20dfff':'#ff68d7',-3.35,3.45,backZ+.21);
   // A raised equipment plinth gives each room a distinct silhouette and purpose.
   box(index===1?'signal console':'archive plinth',-1.15,.55,centerZ-1.1,3.1,1.05,1.35,mat(index===1?'#182735':'#261a31',.38,.58));
   box('plinth cyan edge',-1.15,1.1,centerZ-1.1,3.15,.035,1.4,cyan);
   box('equipment display',-1.15,1.35,centerZ-1.5,2.3,.38,.08,mat('#172431',.22,.45));
   for(let i=0;i<5;i++)box('status light',-2+i*.42,1.38,centerZ-1.44,.12,.035,.02,i%2?magenta:cyan);
   if(index===1){
-    // Twin signal racks, antenna mast, and routed cable trays identify the control room.
-    for(const x of [-3.7,3.35]){
-      box('server rack',x,1.65,centerZ-1.05,.95,3.1,1.05,mat('#172633',.34,.65));
-      box('rack glass',x,1.65,centerZ-.49,.78,2.83,.035,mat('#15334a',.24,.45));
-      for(let row=0;row<7;row++){
-        box('rack module',x,0.48+row*.37,centerZ-.46,.65,.045,.025,mat('#283b4c',.4,.4));
-        box('rack LED',x-.22+(row%3)*.2,.5+row*.37,centerZ-.43,.055,.045,.025,row%2?cyan:magenta);
-      }
-    }
-    box('antenna mast',2.4,3.7,centerZ-3.2,.055,1.4,.055,mat('#a1afbe',.3,.75));
-    box('antenna crossbar',2.4,4.1,centerZ-3.2,.7,.045,.045,cyan);
-    for(let z=centerZ+1.5;z>centerZ-4;z-=1.2)box('cable tray',0,4.55,z,7.8,.06,.22,mat('#36485b',.5,.45));
+    // A blackout development booth hides a camera until its work light is raised.
+    const blackout=new THREE.MeshBasicMaterial({color:'#010207'});
+    box('darkroom left',-3.15,1.95,centerZ-1.15,.18,3.9,6.1,blackout);
+    box('darkroom right',-.05,1.95,centerZ-1.15,.18,3.9,6.1,blackout);
+    box('darkroom ceiling',-1.6,3.92,centerZ-1.15,3.25,.14,6.1,blackout);
+    box('darkroom curtain',-1.6,1.95,centerZ+1.9,3.25,3.9,.12,mat('#080b13'));
+    box('darkroom threshold',-1.6,.035,centerZ+1.65,3.05,.06,.14,magenta);
+    const switchMesh=box('brightness switch',1.05,1.2,centerZ+1.6,.38,.62,.18,mat('#202837',.3,.55),true);
+    box('brightness switch lamp',1.05,1.35,centerZ+1.48,.12,.12,.04,magenta);
+    photoLight=new THREE.PointLight('#f6dbb0',0,8,1.5);photoLight.position.set(-1.6,3.5,centerZ-1.2);scene.add(photoLight);
+    photoFillLight=new THREE.PointLight('#3adfff',0,6,2);photoFillLight.position.set(-1.6,1.1,centerZ-1.3);scene.add(photoFillLight);
+    photoCamera= new THREE.Group();photoCamera.position.set(-1.6,.78,centerZ-.1);photoCamera.visible=false;scene.add(photoCamera);
+    const body=new THREE.Mesh(new THREE.BoxGeometry(.85,.54,.43),mat('#26303a',.3,.72));photoCamera.add(body);
+    const cameraLens=new THREE.Mesh(new THREE.CylinderGeometry(.2,.24,.36,24),mat('#171b20',.16,.62));cameraLens.rotation.x=Math.PI/2;cameraLens.position.set(0,0,-.34);photoCamera.add(cameraLens);
+    const lensGlass=new THREE.Mesh(new THREE.CircleGeometry(.15,24),new THREE.MeshStandardMaterial({color:'#20dfff',emissive:'#1297bd',emissiveIntensity:1.8}));lensGlass.position.set(0,0,-.53);photoCamera.add(lensGlass);
+    box('camera stand',-1.6,.38,centerZ-.1,.12,.64,.12,brass);
+    const cameraTarget=box('photo camera',-1.6,.78,centerZ-.1,.85,.54,.43,black,true);cameraTarget.visible=false;
+    // Contact sheet poster is an explicit translation reference, not a hidden code.
+    box('translation poster',4.76,2.6,centerZ-2.2,.06,1.65,1.6,mat('#171827'),true);
+    const posterArt=document.createElement('canvas');posterArt.width=512;posterArt.height=512;const pctx=posterArt.getContext('2d');pctx.fillStyle='#111321';pctx.fillRect(0,0,512,512);pctx.strokeStyle='#e553ff';pctx.lineWidth=8;pctx.strokeRect(8,8,496,496);pctx.fillStyle='#f4e7ff';pctx.font='bold 38px monospace';pctx.fillText('CONTACT SHEET',36,62);pctx.font='42px serif';pctx.fillStyle='#45eaff';[['△','F'],['◉','O'],['⌁','C'],['✣','U'],['◇','S']].forEach((row,i)=>{pctx.fillText(row[0],55,130+i*72);pctx.fillText('→',205,130+i*72);pctx.fillText(row[1],300,130+i*72)});
+    const posterTexture=new THREE.CanvasTexture(posterArt);posterTexture.colorSpace=THREE.SRGBColorSpace;const posterPanel=new THREE.Mesh(new THREE.PlaneGeometry(1.5,1.5),new THREE.MeshBasicMaterial({map:posterTexture,side:THREE.DoubleSide}));posterPanel.rotation.y=-Math.PI/2;posterPanel.position.set(4.72,2.6,centerZ-2.2);scene.add(posterPanel);
+    const defs=[[0x25b3,'#ff573d'],[0x25c9,'#f7f3ff'],[0x2301,'#d93bff'],[0x2723,'#2fe9ff'],[0x25c7,'#ffc45a']];
+    const coords=[[-2.65,2.15,centerZ+.15],[-.75,2.05,centerZ-1.5],[-2.55,1.65,centerZ-2.7],[-.7,2.5,centerZ-4.45],[-3.05,1.1,centerZ-4.7]];
+    defs.forEach(([code,color],i)=>{const sprite=makeGlyphSprite(String.fromCharCode(code),color);sprite.position.set(...coords[i]);sprite.userData.symbolIndex=i;sprite.name='photo mark';photoSymbols.push(sprite);interactables.push(sprite);});
+    box('photo workbench',-1.65,.7,centerZ-4.5,2.5,.18,1.3,wood);
   } else {
     // Archive shelving, labeled canisters, and a bright scanning table distinguish the vault.
     for(const y of [1.05,2.05,3.05]){
@@ -198,11 +217,11 @@ const keys=new Set(), raycaster=new THREE.Raycaster();
 const startScreen=document.querySelector('#start-screen'), prompt=document.querySelector('#interaction'), promptLabel=document.querySelector('#interaction-label'), toast=document.querySelector('#toast');
 const objective=document.querySelector('#objective-text'),progressCount=document.querySelector('#progress-count'),progressFill=document.querySelector('#progress-fill'),recordLabel=document.querySelector('#record-label');
 function showToast(message){toast.textContent=message;toast.classList.add('visible');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.remove('visible'),2300)}
-const roomTitles=['THE MUSIC ROOM','SIGNAL CONTROL','AFTERIMAGE ARCHIVE'];
-const roomDetails=['01 / TURNTABLE + TAPE','02 / LIVE ROUTING','03 / FILM STORAGE'];
+const roomTitles=['THE MUSIC ROOM','PHOTOGRAPHY LAB','AFTERIMAGE ARCHIVE'];
+const roomDetails=['01 / TURNTABLE + TAPE','02 / FIVE FILTERS','03 / FILM STORAGE'];
 function setRoomLabel(){const number=`ROOM ${String(roomIndex+1).padStart(2,'0')}`;document.querySelector('#room-number').textContent=number;document.querySelector('#room-title').textContent=roomTitles[roomIndex]||'UNMAPPED ROOM';document.querySelector('#room-marker-name').textContent=roomTitles[roomIndex];document.querySelector('#room-marker-detail').textContent=roomDetails[roomIndex];for(let i=0;i<3;i++){const node=document.querySelector(`#route-node-${i}`);node.classList.toggle('active',i===roomIndex);node.classList.toggle('visited',i<roomIndex);}}
-function updateProgress(){progressCount.textContent=`${String(roomIndex+1).padStart(2,'0')} / 03`;progressFill.style.width=`${((roomIndex+1)/3)*100}%`;if(roomIndex!==0){objective.textContent=roomIndex===2?'Use the magenta door to return through the room chain.':'Explore Signal Control.';return}objective.textContent=!drawerOpen?'Open the desk drawer and look inside.':!hasKey?'Take the brass key from the drawer.':!safeOpen?'Use the key on the wall safe.':!(hasVinyl||vinylPlaced)?'Collect the vinyl from the safe.':!vinylPlaced?'Place the vinyl on the turntable.':!codeRevealed?'Play the track in reverse to reveal the code.':!doorPuzzleUnlocked?'Enter 6767 on the door keypad.':'Walk through the unlocked cyan door.';}
-function openDoor(door){if(door.boundary===-5.5&&!doorPuzzleUnlocked){showToast('The exit is locked. Find the vinyl code and enter it at the keypad.');return}if(!door.isOpen){door.isOpen=true;door.mesh.rotation.y=Math.PI/2;showToast('Door swung open. Walk through it.');}else showToast('Door is open. Walk through.');}
+function updateProgress(){progressCount.textContent=`${String(roomIndex+1).padStart(2,'0')} / 03`;progressFill.style.width=`${((roomIndex+1)/3)*100}%`;if(roomIndex===2){objective.textContent='Use the magenta door to return through the room chain.';return}if(roomIndex===1){objective.textContent=!photoBright?'Raise the darkroom brightness switch.':!cameraMode?'Pick up the camera on the workbench.':photoFound.size<5?`Find the hidden marks with filters (${photoFound.size}/5).`:!translationRead?'Read the contact sheet poster.':!photoWordUnlocked?'Enter the five-letter word at the exit lock.':'Walk through the unlocked door to Room 03.';return}objective.textContent=!drawerOpen?'Open the desk drawer and look inside.':!hasKey?'Take the brass key from the drawer.':!safeOpen?'Use the key on the wall safe.':!(hasVinyl||vinylPlaced)?'Collect the vinyl from the safe.':!vinylPlaced?'Place the vinyl on the turntable.':!codeRevealed?'Play the track in reverse to reveal the code.':!doorPuzzleUnlocked?'Enter 6767 on the door keypad.':'Walk through the unlocked cyan door.';}
+function openDoor(door){if(door.boundary===-5.5&&!doorPuzzleUnlocked){showToast('The exit is locked. Find the vinyl code and enter it at the keypad.');return}if(door.boundary===-16.5&&!photoWordUnlocked){showToast('Find all five marks, read the contact sheet, and enter the word.');return}if(!door.isOpen){door.isOpen=true;door.mesh.rotation.y=Math.PI/2;showToast('Door swung open. Walk through it.');}else showToast('Door is open. Walk through.');}
 function syncRoomIndex(){const next=camera.position.z>-5.5?0:camera.position.z>-16.5?1:2;if(next!==roomIndex){roomIndex=next;setRoomLabel();updateProgress();showToast(`Entered ${roomTitles[roomIndex]}.`);}}
 function begin(){started=true;startScreen.classList.add('hidden');canvas.requestPointerLock?.()}
 document.querySelector('#start-button').addEventListener('click',begin);
@@ -214,7 +233,14 @@ function closeKeypad(){keypadOverlay.hidden=true;if(started)canvas.requestPointe
 function submitKeypad(){if(!codeRevealed){keypadHint.textContent='Play the vinyl in reverse to reveal the four digits.';return}if(keypadInput.value!=='6767'){keypadHint.textContent='Incorrect sequence. Listen to the reversed track again.';return}doorPuzzleUnlocked=true;keypadOverlay.hidden=true;updateProgress();openDoor(roomDoorObjects[0]);canvas.requestPointerLock?.();}
 keypadOverlay.addEventListener('click',e=>{const key=e.target.closest('[data-key]');if(!key)return;if(key.dataset.key==='clear')keypadInput.value='';else if(key.dataset.key==='back')keypadInput.value=keypadInput.value.slice(0,-1);else if(keypadInput.value.length<4)keypadInput.value+=key.dataset.key;});
 document.querySelector('#keypad-submit').addEventListener('click',submitKeypad);document.querySelector('#keypad-close').addEventListener('click',closeKeypad);
-document.addEventListener('keydown',e=>{if(!keypadOverlay.hidden){if(/^Digit[0-9]$/.test(e.code)&&keypadInput.value.length<4)keypadInput.value+=e.key;else if(e.code==='Backspace')keypadInput.value=keypadInput.value.slice(0,-1);else if(e.code==='Enter')submitKeypad();else if(e.code==='Escape')closeKeypad();e.preventDefault();return}keys.add(e.code);if(e.code==='Escape'&&started&&!locked)canvas.requestPointerLock?.();if(e.code==='KeyE')interact()});document.addEventListener('keyup',e=>keys.delete(e.code));
+const photoHud=document.querySelector('#photo-hud'),translationOverlay=document.querySelector('#translation-overlay'),wordlockOverlay=document.querySelector('#wordlock-overlay'),wordlockInput=document.querySelector('#wordlock-input'),wordlockHint=document.querySelector('#wordlock-hint');
+const setFilter=n=>{activeFilter=n;const names=['INFRARED','NEGATIVE','ULTRAVIOLET','CYANOGRAPH','AMBER'];document.querySelector('#photo-filter-name').textContent=names[n];photoHud.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',Number(b.dataset.filter)===n));const game=document.querySelector('#game');game.classList.remove('filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber');game.classList.add(['filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber'][n]);};
+const closeOverlay=o=>{o.hidden=true;if(started)canvas.requestPointerLock?.()};
+document.querySelector('#translation-close').addEventListener('click',()=>closeOverlay(translationOverlay));document.querySelector('#wordlock-close').addEventListener('click',()=>closeOverlay(wordlockOverlay));
+photoHud.addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(b)setFilter(Number(b.dataset.filter));});
+const submitWord=()=>{if(photoFound.size<5||!translationRead){wordlockHint.textContent='Capture all five marks and inspect the contact sheet first.';return}if(wordlockInput.value!=='FOCUS'){wordlockHint.textContent='That sequence does not match the contact sheet.';return}photoWordUnlocked=true;wordlockOverlay.hidden=true;const d=roomDoorObjects.find(x=>x.boundary===-16.5);d.isOpen=true;d.mesh.rotation.y=Math.PI/2;updateProgress();showToast('FOCUS accepted. The next door unlocks.');canvas.requestPointerLock?.()};
+wordlockOverlay.addEventListener('click',e=>{const b=e.target.closest('[data-letter]');if(!b)return;const v=b.dataset.letter;if(v==='clear')wordlockInput.value='';else if(v==='back')wordlockInput.value=wordlockInput.value.slice(0,-1);else if(wordlockInput.value.length<5)wordlockInput.value+=v;});document.querySelector('#wordlock-submit').addEventListener('click',submitWord);
+document.addEventListener('keydown',e=>{if(!wordlockOverlay.hidden){if(/^(KeyF|KeyO|KeyC|KeyU|KeyS)$/.test(e.code)&&wordlockInput.value.length<5)wordlockInput.value+=e.key.toUpperCase();else if(e.code==='Backspace')wordlockInput.value=wordlockInput.value.slice(0,-1);else if(e.code==='Enter')submitWord();else if(e.code==='Escape')closeOverlay(wordlockOverlay);e.preventDefault();return}if(!keypadOverlay.hidden){if(/^Digit[0-9]$/.test(e.code)&&keypadInput.value.length<4)keypadInput.value+=e.key;else if(e.code==='Backspace')keypadInput.value=keypadInput.value.slice(0,-1);else if(e.code==='Enter')submitKeypad();else if(e.code==='Escape')closeKeypad();e.preventDefault();return}if(cameraMode&&/^Digit[1-5]$/.test(e.code))setFilter(Number(e.code.slice(-1))-1);if(e.code==='KeyQ'&&cameraMode){cameraMode=false;photoHud.hidden=true;document.querySelector('#game').classList.remove('photo-lens-mode','filter-infrared','filter-negative','filter-uv','filter-cyan','filter-amber');showToast('Camera stowed.')}keys.add(e.code);if(e.code==='Escape'&&started&&!locked)canvas.requestPointerLock?.();if(e.code==='KeyE')interact()});document.addEventListener('keyup',e=>keys.delete(e.code));
 canvas.addEventListener('click',()=>{if(started&&!locked)canvas.requestPointerLock?.()});
 const soundButton=document.querySelector('#sound-toggle');let soundOn=true;
 soundButton.addEventListener('click',()=>{soundOn=!soundOn;document.querySelector('#sound-label').textContent=soundOn?'SOUND ON':'SOUND OFF';if(!soundOn)stopTone();else if(playing)startTone()});
@@ -228,6 +254,10 @@ function interact(){
   const hit=nearest();if(!hit)return;
   const passage=roomDoorObjects.find(door=>door.mesh===hit);if(passage){openDoor(passage);return;}
   switch(hit.name){
+    case'brightness switch':photoBright=!photoBright;photoLight.intensity=photoBright?18:0;photoFillLight.intensity=photoBright?7:0;interactables.find(o=>o.name==='photo camera').visible=photoBright;photoCamera.visible=photoBright;showToast(photoBright?'The work light comes on. A camera is visible on the bench.':'The darkroom falls black.');break;
+    case'photo camera':cameraMode=true;photoHud.hidden=false;document.querySelector('#game').classList.add('photo-lens-mode');setFilter(activeFilter);showToast('Camera ready. Select filters 1–5, aim at marks, and press E.');break;
+    case'translation poster':translationRead=true;translationOverlay.hidden=false;document.exitPointerLock?.();updateProgress();break;
+    case'word lock':wordlockInput.value='';wordlockHint.textContent=photoFound.size===5&&translationRead?'Enter the word from the contact sheet.':'Capture all five marks and read the contact sheet first.';wordlockOverlay.hidden=false;document.exitPointerLock?.();break;
     case'jammed drawer':if(!drawerOpen){drawerOpen=true;drawer.position.z=-1.15;drawerFace.position.z=-1.06;drawerKey.visible=true;keyHead.visible=true;keyToothA.visible=true;keyToothB.visible=true;keyMarker.visible=true;keyGlow.intensity=4;showToast('Drawer open — the brass key is glowing inside. Aim at it and press E.');}else showToast(hasKey?'The drawer is empty.':'The brass key is inside the open drawer.');break;
     case'drawer key':if(!drawerOpen){showToast('Open the drawer first.');break}hasKey=true;drawerKey.visible=false;keyHead.visible=false;keyToothA.visible=false;keyToothB.visible=false;keyMarker.visible=false;keyGlow.intensity=0;showToast('Brass key collected. The cyan outline on the wall marks the safe.');break;
     case'safe door':if(!hasKey){showToast('The safe is locked. Look in the open desk drawer for the brass key.');break}if(!safeOpen){safeOpen=true;safeDoor.visible=false;safeDial.visible=false;vinylItem.visible=true;vinylLabel.visible=true;vinylGroove.visible=true;vinylMarker.visible=true;vinylGlow.intensity=5;showToast('Safe open — the pink vinyl is mounted inside. Aim at it and press E.');}else showToast(hasVinyl?'The safe is open.':'Take the vinyl from the safe.');break;
@@ -237,7 +267,7 @@ function interact(){
     case'reverse switch':if(!vinylPlaced){showToast('Place the vinyl on the turntable first.');break}reversePlayback=!reversePlayback;reverseLamp.material=reversePlayback?magenta:cyan;if(playing){startTone();if(reversePlayback){codeRevealed=true;showToast('Reverse playback reveals 6767.');}else showToast('Forward playback restored.');}else showToast(reversePlayback?'Playback direction set to reverse.':'Playback direction set to forward.');updateRecordLabel();break;
     case'room keypad':openKeypad();break;
     case'mixing console':showToast('Three channels. The bass stem is isolated.');break;
-    default:showToast('A piece of the old booth.');
+    default:if(hit.userData.symbolIndex!==undefined){const i=hit.userData.symbolIndex;if(!cameraMode){showToast('Pick up and look through the camera first.');break}if(activeFilter!==i){showToast('That mark needs a different filter.');break}photoFound.add(i);hit.visible=false;document.querySelector('#symbol-count').textContent=`${photoFound.size} / 5 SYMBOLS`;updateProgress();showToast(`Captured mark ${photoFound.size} of 5.`);break}showToast('A piece of the old booth.');
   }
   updateProgress();
 }
@@ -261,8 +291,9 @@ function tick(){
     }
   }
   camera.position.y=1.62;syncRoomIndex();
+  photoSymbols.forEach((s,i)=>s.visible=photoBright&&cameraMode&&activeFilter===i&&!photoFound.has(i));
   const target=nearest();prompt.classList.toggle('visible',!!target);
-  if(target){const door=roomDoorObjects.find(item=>item.mesh===target);const names={'jammed drawer':drawerOpen?'TAKE KEY':'OPEN DRAWER','drawer key':'TAKE BRASS KEY','safe door':hasKey?'UNLOCK SAFE':'SAFE — KEY REQUIRED','safe vinyl':'TAKE VINYL','turntable':vinylPlaced?(playing?'STOP RECORD':'PLAY RECORD'):hasVinyl?'PLACE VINYL':'TURNTABLE — NO RECORD','reverse switch':`REVERSE: ${reversePlayback?'ON':'OFF'}`,'room keypad':'ENTER ACCESS CODE','mixing console':'INSPECT MIXER'};promptLabel.textContent=door?(door.isOpen?'WALK THROUGH DOOR':camera.position.z>door.boundary?'E OPEN CYAN DOOR':'E OPEN MAGENTA RETURN'):(names[target.name]||'INSPECT');}
+  if(target){const door=roomDoorObjects.find(item=>item.mesh===target);const names={'jammed drawer':drawerOpen?'TAKE KEY':'OPEN DRAWER','drawer key':'TAKE BRASS KEY','safe door':hasKey?'UNLOCK SAFE':'SAFE — KEY REQUIRED','safe vinyl':'TAKE VINYL','turntable':vinylPlaced?(playing?'STOP RECORD':'PLAY RECORD'):hasVinyl?'PLACE VINYL':'TURNTABLE — NO RECORD','reverse switch':`REVERSE: ${reversePlayback?'ON':'OFF'}`,'room keypad':'ENTER ACCESS CODE','mixing console':'INSPECT MIXER','brightness switch':photoBright?'SWITCH OFF WORK LIGHT':'RAISE WORK LIGHT','photo camera':'PICK UP CAMERA','translation poster':'READ CONTACT SHEET','word lock':'ENTER WORD','photo mark':'CAPTURE SYMBOL'};promptLabel.textContent=door?(door.isOpen?'WALK THROUGH DOOR':camera.position.z>door.boundary?'E OPEN CYAN DOOR':'E OPEN MAGENTA RETURN'):(names[target.name]||'INSPECT');}
   if(playing)record.rotation.y+=dt*1.8;if(keyMarker.visible)keyMarker.position.y=1.42+Math.sin(clock.elapsedTime*2.4)*.035;if(vinylMarker.visible)vinylMarker.position.y=2.18+Math.sin(clock.elapsedTime*2.1)*.045;dust.rotation.y+=dt*.008;renderer.render(scene,camera);
 }
 const clock=new THREE.Clock();tick();
