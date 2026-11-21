@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+<defs>
+ <linearGradient id="back" x2="0" y2="1"><stop stop-color="#4a4236"/><stop offset="1" stop-color="#292522"/></linearGradient>
+ <linearGradient id="left" x2="1" y2=".35"><stop stop-color="#17191a"/><stop offset="1" stop-color="#403a32"/></linearGradient>
+ <linearGradient id="right" x2="0" y2=".5"><stop stop-color="#54473a"/><stop offset="1" stop-color="#242322"/></linearGradient>
+ <linearGradient id="floor" x2="0" y2="1"><stop stop-color="#38302a"/><stop offset="1" stop-color="#171716"/></linearGradient>
+ <linearGradient id="beam" x2="1" y2=".2"><stop stop-color="#f3ce91" stop-opacity=".34"/><stop offset="1" stop-color="#d7ab71" stop-opacity="0"/></linearGradient>
+ <radialGradient id="lamp"><stop stop-color="#f3bc78" stop-opacity=".45"/><stop offset="1" stop-color="#f3bc78" stop-opacity="0"/></radialGradient>
+ <linearGradient id="screen"><stop stop-color="#e4c48d"/><stop offset=".52" stop-color="#927b5b"/><stop offset="1" stop-color="#433c32"/></linearGradient>
+ <filter id="soft"><feGaussianBlur stdDeviation="18"/></filter>
+ <filter id="shadow"><feGaussianBlur stdDeviation="10"/></filter>
+ <pattern id="grain" width="120" height="120" patternUnits="userSpaceOnUse"><circle cx="13" cy="18" r="1" fill="#fff" opacity=".14"/><circle cx="90" cy="69" r=".8" fill="#fff" opacity=".12"/><circle cx="48" cy="104" r=".7" fill="#fff" opacity=".1"/></pattern>
+</defs>
+<!-- Perspective shell: compact booth, seen from its entrance. -->
+<path d="M0 0H1600L1118 177H518Z" fill="#171819"/>
+<path d="M0 0 518 177V589L0 900Z" fill="url(#left)"/>
+<path d="M1600 0 1118 177V589L1600 900Z" fill="url(#right)"/>
+<path d="M518 177H1118V589H518Z" fill="url(#back)"/>
+<path d="M0 900 518 589H1118L1600 900Z" fill="url(#floor)"/>
+<!-- Back wall acoustic panels -->
+<g opacity=".62" stroke="#171716" stroke-width="8">
+ <path d="M535 199H634V571H535ZM652 199H751V571H652ZM769 199H868V571H769ZM886 199H985V571H886ZM1003 199H1100V571H1003Z" fill="#302d29"/>
+ <path d="M550 210V558M563 210V558M576 210V558M589 210V558M602 210V558M615 210V558M667 210V558M680 210V558M693 210V558M706 210V558M719 210V558M732 210V558M784 210V558M797 210V558M810 210V558M823 210V558M836 210V558M849 210V558M901 210V558M914 210V558M927 210V558M940 210V558M953 210V558M966 210V558M1018 210V558M1031 210V558M1044 210V558M1057 210V558M1070 210V558M1083 210V558" stroke="#494139" stroke-width="2"/>
+</g>
+<!-- Projection booth window/screen and warm spill -->
+<ellipse cx="828" cy="383" rx="282" ry="178" fill="#dfa968" opacity=".12" filter="url(#soft)"/>
+<rect x="678" y="265" width="290" height="205" rx="3" fill="#17191a" stroke="#171514" stroke-width="14"/>
+<rect x="692" y="279" width="262" height="177" fill="url(#screen)"/>
+<path d="M710 434Q807 366 935 390V456H710Z" fill="#75634d" opacity=".38"/>
+<path d="M692 279H954V456H692Z" fill="none" stroke="#e9d7b4" opacity=".14"/>
+<!-- Exit door -->
+<rect x="1000" y="254" width="104" height="332" fill="#211c18" stroke="#171513" stroke-width="9"/>
+<rect x="1013" y="267" width="78" height="143" fill="#392d23" stroke="#554331" stroke-width="5"/>
+<rect x="1013" y="425" width="78" height="145" fill="#342a22" stroke="#554331" stroke-width="5"/>
+<circle cx="1022" cy="424" r="5" fill="#c3955b"/><path d="M1022 424h19" stroke="#c3955b" stroke-width="4"/>
+<!-- Left wall shelf and poster -->
+<path d="M118 340 440 274V289L118 359Z" fill="#4c3929"/><path d="M140 335V390M415 279V344" stroke="#201a16" stroke-width="14"/>
+<g transform="matrix(.78 -.16 0 1 156 150)"><rect width="210" height="125" fill="#9d6345" stroke="#30241d" stroke-width="9"/><rect x="15" y="14" width="180" height="95" fill="#d0a16c"/><circle cx="106" cy="53" r="27" fill="#835440"/><path d="M25 95h160M31 104h122" stroke="#49372c" stroke-width="5"/></g>
+<!-- Projector throw -->
+<path d="M980 320 760 385 739 398 1000 350Z" fill="url(#beam)"/>
+<ellipse cx="967" cy="337" rx="75" ry="50" fill="#e7b673" opacity=".12" filter="url(#soft)"/>
+<!-- Desk and drawer, close to camera -->
+<ellipse cx="580" cy="745" rx="340" ry="55" fill="#050606" opacity=".55" filter="url(#shadow)"/>
+<path d="M310 590 737 590 822 641 246 641Z" fill="#765139" stroke="#211a15" stroke-width="8"/>
+<path d="M246 641 822 641 808 777 277 777Z" fill="#38291f" stroke="#1d1814" stroke-width="8"/>
+<path d="M285 661 787 661 778 720 291 720Z" fill="#4c3526" stroke="#241b15" stroke-width="5"/>
+<path d="M529 688h46" stroke="#c09058" stroke-width="7"/><circle cx="551" cy="688" r="5" fill="#e1b578"/>
+<path d="M303 777 320 777 302 861 282 861ZM750 777 769 777 793 861 773 861Z" fill="#201a15"/>
+<!-- Turntable on desk -->
+<path d="M365 566 511 566 536 590 344 590Z" fill="#282727" stroke="#161616" stroke-width="5"/>
+<ellipse cx="436" cy="571" rx="57" ry="11" fill="#101112" stroke="#77716a" stroke-width="3"/>
+<ellipse cx="436" cy="568" rx="38" ry="7" fill="#171819" stroke="#413a32" stroke-width="2"/>
+<ellipse cx="436" cy="568" rx="12" ry="3" fill="#a8613e"/><circle cx="436" cy="568" r="2" fill="#d2b28a"/>
+<path d="m492 562-33 14" stroke="#b58c5b" stroke-width="4"/><circle cx="493" cy="561" r="5" fill="#d0a368"/>
+<!-- Three-channel mixer -->
+<path d="M550 573 700 573 732 593 532 593Z" fill="#1c2020" stroke="#0d0e0e" stroke-width="4"/>
+<g fill="#b98a56"><circle cx="576" cy="579" r="5"/><circle cx="610" cy="579" r="5"/><circle cx="644" cy="579" r="5"/><circle cx="678" cy="579" r="5"/></g>
+<g stroke="#d4c6ad" stroke-width="2"><path d="m572 585 1 6M606 585l1 6M640 585l1 6M674 585l1 6"/></g>
+<!-- Desk lamp and pool of amber light -->
+<ellipse cx="302" cy="570" rx="142" ry="102" fill="url(#lamp)"/>
+<path d="m300 567 2-91" stroke="#a27b4d" stroke-width="8"/><path d="m267 470 70 0-15 34h-42Z" fill="#9b764b" stroke="#30241a" stroke-width="5"/><ellipse cx="302" cy="505" rx="29" ry="8" fill="#f2c182" opacity=".8"/>
+<!-- Projector cabinet and spinning reels on right -->
+<ellipse cx="1234" cy="688" rx="190" ry="36" fill="#050606" opacity=".5" filter="url(#shadow)"/>
+<path d="M1138 531 1319 531 1367 566 1104 566Z" fill="#504439" stroke="#211d18" stroke-width="6"/>
+<path d="M1104 566 1367 566 1355 710 1120 710Z" fill="#292724" stroke="#151514" stroke-width="6"/>
+<path d="M1125 587h222v91h-222Z" fill="#3a3833" stroke="#181918" stroke-width="5"/>
+<circle cx="1182" cy="496" r="50" fill="#252522" stroke="#b08a58" stroke-width="7"/><circle cx="1182" cy="496" r="12" fill="#b08a58"/>
+<circle cx="1287" cy="496" r="42" fill="#252522" stroke="#b08a58" stroke-width="7"/><circle cx="1287" cy="496" r="11" fill="#b08a58"/>
+<g stroke="#71634d" stroke-width="5"><path d="M1182 453v86M1140 496h84M1152 466l60 60M1212 466l-60 60"/><path d="M1287 460v72M1251 496h72M1262 471l50 50M1312 471l-50 50"/></g>
+<path d="M1230 579h83" stroke="#d29a61" stroke-width="12"/><circle cx="1312" cy="579" r="10" fill="#e2c397"/>
+<!-- Floorboards converge toward the back wall -->
+<g stroke="#171615" opacity=".8" fill="none"><path d="M800 589 80 900M800 589 260 900M800 589 440 900M800 589 620 900M800 589 980 900M800 589 1160 900M800 589 1340 900M800 589 1520 900" stroke-width="3"/><path d="M320 706h960M175 785h1250M40 855h1520" stroke-width="4"/></g>
+<!-- Warm practical ceiling fixture and film grain -->
+<circle cx="826" cy="142" r="88" fill="#c38d55" opacity=".12" filter="url(#soft)"/><path d="M790 143h72l-13 24h-46Z" fill="#64503a"/><ellipse cx="826" cy="167" rx="24" ry="6" fill="#e4bd7e" opacity=".55"/>
+<rect width="1600" height="900" fill="url(#grain)" opacity=".36"/>
+<path d="M0 0H1600V900H0Z" fill="none" stroke="#090a0a" stroke-width="80" opacity=".38"/>
+</svg>

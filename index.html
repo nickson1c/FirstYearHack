@@ -16,10 +16,12 @@
 <body>
   <main id="game" aria-label="REEL SCORE room prototype">
     <canvas id="scene"></canvas>
+    <canvas id="offline-scene" aria-label="Interactive 3D room fallback"></canvas>
+    <img id="room-preview" src="room-preview.svg" alt="A dim, atmospheric 3D illustration of the projection booth, with a desk, turntable, film projector, and locked door" />
     <div class="grain" aria-hidden="true"></div>
     <header class="topbar">
       <div class="brand"><span class="brand-mark">R</span><span>REEL <i>//</i> SCORE</span></div>
-      <div class="chapter"><span class="live-dot"></span> ROOM 01 <span class="chapter-line"></span> THE PROJECTION BOOTH</div>
+      <div class="chapter"><span class="live-dot"></span> <span id="room-number">ROOM 01</span> <span class="chapter-line"></span> <span id="room-title">THE MUSIC ROOM</span></div>
       <button id="sound-toggle" class="sound-toggle" aria-label="Toggle ambient sound"><span class="sound-icon">♫</span> <span id="sound-label">SOUND ON</span></button>
     </header>
     <section class="mission">
@@ -28,8 +30,14 @@
       <p>A record is missing. The booth door is locked.<br />Find the first thread and follow the sound.</p>
       <div class="objective"><span class="objective-icon">◎</span><span><small>CURRENT OBJECTIVE</small><strong id="objective-text">Find a way into the desk drawer</strong></span></div>
       <div class="progress"><span class="progress-fill" id="progress-fill"></span></div>
-      <div class="progress-label"><span>ROOM PROGRESS</span><span id="progress-count">00 / 04</span></div>
+      <div class="progress-label"><span>ROOM PROGRESS</span><span id="progress-count">01 / 03</span></div>
     </section>
+    <aside class="room-marker" aria-label="Current room and route">
+      <span class="room-marker-kicker">YOU ARE HERE</span>
+      <strong id="room-marker-name">THE MUSIC ROOM</strong>
+      <small id="room-marker-detail">ROOM 01 · TURNTABLE / TAPE</small>
+      <div class="route-map" aria-label="Three room route"><span class="route-node active" id="route-node-0">01</span><i></i><span class="route-node" id="route-node-1">02</span><i></i><span class="route-node" id="route-node-2">03</span></div>
+    </aside>
     <div class="crosshair"><i></i><i></i><span></span></div>
     <section class="viewfinder" aria-label="Camera viewfinder status">
       <span class="vf-corner tl"></span><span class="vf-corner tr"></span><span class="vf-corner bl"></span><span class="vf-corner br"></span>
@@ -38,10 +46,27 @@
     </section>
     <div class="interaction" id="interaction"><kbd>E</kbd><span id="interaction-label">INTERACT</span></div>
     <div class="record-label" id="record-label"><span>NOW PLAYING</span><strong>—</strong></div>
+    <section class="keypad-overlay" id="keypad-overlay" hidden aria-label="Exit door keypad">
+      <div class="keypad-card">
+        <button class="keypad-close" id="keypad-close" aria-label="Close keypad">×</button>
+        <div class="eyebrow">PROJECTION BOOTH ACCESS</div>
+        <h2>Signal lock</h2>
+        <p id="keypad-hint">Enter the four digit code.</p>
+        <input id="keypad-input" aria-label="Four digit access code" inputmode="numeric" maxlength="4" readonly value="" />
+        <div class="keypad-grid">
+          <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button>
+          <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button>
+          <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button>
+          <button data-key="clear" class="keypad-alt">CLR</button><button data-key="0">0</button><button data-key="back" class="keypad-alt">⌫</button>
+        </div>
+        <button id="keypad-submit" class="keypad-submit">UNLOCK DOOR <span>↗</span></button>
+      </div>
+    </section>
     <aside class="controls"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> MOVE</span><span><kbd>MOUSE</kbd> LOOK</span><span><kbd>E</kbd> INTERACT</span><span><kbd>ESC</kbd> RELEASE</span></aside>
     <div class="toast" id="toast" role="status"></div>
     <div class="start-screen" id="start-screen"><div class="start-card"><div class="eyebrow">A SMALL ROOM, A BIGGER SIGNAL</div><h2>Listen for<br /><em>what's hidden.</em></h2><p>Step inside the projection booth. Look close. Touch everything.</p><button id="start-button">ENTER THE ROOM <span>↗</span></button><div class="start-foot">HEADPHONES RECOMMENDED <span>•</span> 3–5 MIN EXPERIENCE</div></div></div>
   </main>
+  <script src="src/fallback.js"></script>
   <script type="module" src="src/app.js"></script>
 </body>
 </html>

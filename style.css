@@ -6,3 +6,20 @@
 .start-card p{margin:0 0 17px;}
 .start-foot{margin-top:14px;}
 @media(max-width:700px){.start-screen{justify-content:center;padding:0 5% 10%;}.start-card{width:min(360px,90vw);padding:26px}.start-card h2{font-size:46px}}
+/* Always show the room, including when opened directly from disk or without CDN access. */
+#room-preview{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;filter:brightness(.72) saturate(1.8) hue-rotate(165deg);}
+#offline-scene{position:absolute;inset:0;width:100%;height:100%;display:none;z-index:1;cursor:crosshair;}
+.room-marker{position:absolute;z-index:3;right:7.5%;top:13%;width:min(260px,27vw);padding:14px 16px 12px;border:1px solid #52dfff35;border-left:2px solid #22dfff;background:linear-gradient(120deg,rgba(8,17,28,.88),rgba(9,11,19,.55));box-shadow:0 8px 28px #03081155;pointer-events:none;backdrop-filter:blur(5px)}
+.room-marker-kicker,.room-marker strong,.room-marker small{display:block}.room-marker-kicker{font-size:8px;letter-spacing:.2em;color:#52dfff}.room-marker strong{margin-top:7px;font:600 20px/1 'Barlow Condensed',sans-serif;letter-spacing:.08em;color:#e3edf3}.room-marker small{margin-top:6px;font-size:8px;letter-spacing:.12em;color:#9baabd}.route-map{display:flex;align-items:center;gap:7px;margin-top:13px}.route-node{display:grid;place-items:center;width:22px;height:22px;border:1px solid #8998a844;color:#8897a8;font-size:8px}.route-node.active{border-color:#22dfff;color:#22dfff;background:#22dfff1a;box-shadow:0 0 11px #22dfff36}.route-node.visited{border-color:#e339ff;color:#f26aff;background:#e339ff1b}.route-map i{height:1px;flex:1;background:#8795a733}
+@media(max-width:700px){.room-marker{top:74px;right:5%;width:190px;padding:10px 11px}.room-marker strong{font-size:16px}.room-marker small{font-size:7px}.route-map{margin-top:9px}}
+.keypad-overlay{position:absolute;inset:0;z-index:12;display:grid;place-items:center;background:rgba(3,7,14,.76);backdrop-filter:blur(8px)}
+.keypad-overlay[hidden]{display:none}
+.keypad-card{position:relative;width:min(370px,92vw);padding:30px;border:1px solid #20dfff55;background:linear-gradient(145deg,#101a29,#0b101a);box-shadow:0 20px 80px #000b}
+.keypad-card h2{margin:10px 0 4px;font:600 38px 'Barlow Condensed',sans-serif;letter-spacing:.05em;color:#ecf4fb}
+.keypad-card p{min-height:16px;margin:0 0 15px;font:9px 'IBM Plex Mono',monospace;color:#97a9bb}
+.keypad-close{position:absolute;top:12px;right:14px;border:0;background:none;color:#98a8b7;font:24px 'IBM Plex Mono';cursor:pointer}
+#keypad-input{width:100%;height:48px;margin-bottom:13px;border:1px solid #2b5267;background:#07111b;color:#35e4ff;text-align:center;font:24px 'IBM Plex Mono';letter-spacing:.45em;outline:none}
+.keypad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.keypad-grid button{height:42px;border:1px solid #28384a;background:#172333;color:#d8e8f1;font:15px 'IBM Plex Mono';cursor:pointer}
+.keypad-grid button:hover{border-color:#20dfff;background:#203849}.keypad-grid .keypad-alt{color:#ee76ff}
+.keypad-submit{width:100%;margin-top:12px;padding:13px 15px;border:0;background:#1ccbe7;color:#07131d;display:flex;justify-content:space-between;cursor:pointer;font:600 10px 'IBM Plex Mono';letter-spacing:.12em}

@@ -2,62 +2,116 @@ import * as THREE from 'three';
 
 const canvas = document.querySelector('#scene');
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#090b0d');
-scene.fog = new THREE.FogExp2('#090b0d', 0.055);
+scene.background = new THREE.Color('#080c15');
+scene.fog = new THREE.FogExp2('#080c15', 0.028);
 const camera = new THREE.PerspectiveCamera(65, innerWidth / innerHeight, 0.08, 60);
 camera.position.set(0, 1.62, 5.6);
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled = false;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+renderer.toneMappingExposure = 1.28;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+// Keep the local renderer active unless WebGL actually initializes.
+document.querySelector('#room-preview').style.display = 'none';
+document.querySelector('#offline-scene').style.display = 'none';
+window.__reelThreeReady = true;
 
-scene.add(new THREE.HemisphereLight('#aab4c3', '#251914', 1.35));
-const lamp = new THREE.PointLight('#e7a866', 34, 12, 2);
-lamp.position.set(-1.3, 3.35, -1.7); lamp.castShadow = true; scene.add(lamp);
-const redLamp = new THREE.PointLight('#a74732', 10, 8, 2);
+scene.add(new THREE.HemisphereLight('#b4d6ff', '#111725', 2.15));
+const entryFill = new THREE.PointLight('#28cfff', 20, 16, 2);entryFill.position.set(0,3.6,3.5);scene.add(entryFill);
+const lamp = new THREE.PointLight('#22d9ff', 34, 13, 2);
+lamp.position.set(-1.3, 3.35, -1.7); scene.add(lamp);
+const redLamp = new THREE.PointLight('#d72aff', 18, 10, 2);
 redLamp.position.set(3.2, 2.7, -2); scene.add(redLamp);
 
 const mat = (color, roughness=0.8, metalness=0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
-const wood=mat('#493426'), darkWood=mat('#241d18'), wall=mat('#38332d'), plaster=mat('#716251'), brass=mat('#ad7946',.35,.72), black=mat('#101112',.45,.24), cream=mat('#c9bba2');
+const wood=mat('#202630',.52,.35), darkWood=mat('#10141c',.58,.42), wall=mat('#242a36'), plaster=mat('#30394a'), brass=mat('#b77749',.35,.72), black=mat('#10141b',.45,.24), cream=mat('#c9d5de');
+const cyan=new THREE.MeshStandardMaterial({color:'#20d9ff',emissive:'#00a8cb',emissiveIntensity:2.1,metalness:.25,roughness:.28});
+const magenta=new THREE.MeshStandardMaterial({color:'#f235ff',emissive:'#b000d0',emissiveIntensity:1.8,metalness:.2,roughness:.32});
 function box(name, x,y,z, sx,sy,sz, material, target=false) {
   const mesh=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material); mesh.name=name; mesh.position.set(x,y,z); mesh.castShadow=true; mesh.receiveShadow=true; scene.add(mesh); if(target) interactables.push(mesh); return mesh;
 }
 const interactables=[];
+const roomDoorObjects=[];
+function buildDoorway(z,boundaryIndex){
+  const openingX=4.02,openingWidth=1.6,leftEdge=openingX-openingWidth/2,rightEdge=openingX+openingWidth/2;
+  const material=mat(boundaryIndex===0?'#252d3a':'#252239',.65,.3);
+  box('partition left',(-5+leftEdge)/2,2.5,z,leftEdge+5,5,.25,material);
+  box('partition right',(5+rightEdge)/2,2.5,z,5-rightEdge,5,.25,material);
+  box('partition lintel',openingX,4,z,openingWidth,2,.25,material);
+  const door=box(boundaryIndex===0?'exit door':`room door ${boundaryIndex}`,openingX,1.5,z,1.45,3,.12,darkWood,true);
+  box('cyan door frame',openingX,3.02,z+.16,1.62,.05,.08,cyan);
+  box('magenta door frame',openingX,3.02,z-.16,1.62,.05,.08,magenta);
+  box('door handle',openingX-.55,1.48,z+.09,.06,.16,.06,brass);
+  if(boundaryIndex===0){const keypad=box('room keypad',3.02,1.48,z+.22,.24,.82,.1,black,true);box('keypad display',3.02,1.75,z+.16,.16,.12,.025,cyan);for(let row=0;row<3;row++)for(let col=0;col<3;col++)box('keypad button',2.97+col*.05,1.55-row*.11,z+.14,.025,.025,.02,cream);}
+  roomDoorObjects.push({mesh:door,boundary:z,from:boundaryIndex,to:boundaryIndex+1,isOpen:false});
+}
+function addRoomSign(title,subtitle,accent,x,y,z){
+  const art=document.createElement('canvas');art.width=768;art.height=256;const ctx=art.getContext('2d');
+  ctx.fillStyle='#08121f';ctx.fillRect(0,0,768,256);ctx.strokeStyle=accent;ctx.lineWidth=7;ctx.strokeRect(8,8,752,240);
+  ctx.fillStyle=accent;ctx.font='bold 27px monospace';ctx.fillText('REEL // SCORE    •    ACCESS NODE',30,55);
+  ctx.fillStyle='#eef6ff';ctx.font='bold 52px sans-serif';ctx.fillText(title,30,132);
+  ctx.fillStyle='#a9bbcc';ctx.font='25px monospace';ctx.fillText(subtitle,32,190);
+  const texture=new THREE.CanvasTexture(art);texture.colorSpace=THREE.SRGBColorSpace;
+  const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.45,.82),new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide}));
+  sign.position.set(x,y,z);scene.add(sign);
+}
+function makePickupMarker(text,color){
+  const art=document.createElement('canvas');art.width=320;art.height=92;const ctx=art.getContext('2d');
+  ctx.fillStyle='rgba(6,14,24,.94)';ctx.fillRect(3,3,314,86);ctx.strokeStyle=color;ctx.lineWidth=5;ctx.strokeRect(3,3,314,86);
+  ctx.fillStyle=color;ctx.font='bold 30px monospace';ctx.fillText(text,20,59);
+  const texture=new THREE.CanvasTexture(art);texture.colorSpace=THREE.SRGBColorSpace;
+  const marker=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:true}));marker.scale.set(1.25,.36,1);scene.add(marker);marker.visible=false;return marker;
+}
 
 // A compact 1970s booth: warm practical light, dark walnut, dusty concrete, and a projector beam.
-box('floor',0,-.12,0,10,.24,11,mat('#38302a'));
-box('back wall',0,2.5,-5.5,10,5,.25,wall); box('left wall',-5,2.5,0,.25,5,11,wall); box('right wall',5,2.5,0,.25,5,11,wall);
-box('ceiling',0,5,0,10,.2,11,mat('#211e1b'));
+box('floor',0,-.12,0,10,.24,11,mat('#1b2635',.48,.34));
+box('left wall',-5,2.5,0,.25,5,11,wall); box('right wall',5,2.5,0,.25,5,11,wall);
+box('ceiling',0,5,0,10,.2,11,mat('#151c29'));
 // Floor boards and wall battens make the geometry read as a real, lived-in room.
-for(let i=-4;i<=4;i++) box('floor seam',i*.95,.008,0,.012,.012,10.5,mat('#211d19'));
+for(let i=-4;i<=4;i++) box('floor seam',i*.95,.008,0,.012,.012,10.5,mat('#111a27'));
 for(let z=-4.7;z<5;z+=1.05) box('wall batten',-4.84,2.5,z,.08,4.7,.06,darkWood);
 for(let z=-4.7;z<5;z+=1.05) box('wall batten',4.84,2.5,z,.08,4.7,.06,darkWood);
 // Back acoustic panels
-for(let x=-4.2;x<=4.2;x+=1.4){ box('acoustic panel',x,2.3,-5.34,1.03,2.05,.09,mat('#282727')); for(let k=0;k<5;k++) box('panel groove',x-.38+k*.19,2.3,-5.275,.018,1.85,.012,mat('#47403a')); }
+for(let x=-4.2;x<=2.8;x+=1.4){ box('acoustic panel',x,2.3,-5.34,1.03,2.05,.09,mat('#202734')); for(let k=0;k<5;k++) box('panel groove',x-.38+k*.19,2.3,-5.275,.018,1.85,.012,mat('#364153')); }
+box('cyan wall strip',0,4.18,-5.28,8.1,.035,.045,cyan);box('magenta wall strip',-4.82,3.72,0,.04,.035,9.2,magenta);
+box('cyan floor marker',0,.015,-4.95,8,.018,.06,cyan);
+box('room sign backing',-3.35,3.45,-5.3,2.75,1.02,.08,black);addRoomSign('MUSIC ROOM','01 / TURNTABLE + TAPE','#20dfff',-3.35,3.45,-5.24);
+buildDoorway(-5.5,0);
 // Projection window and door
 box('booth window',0,2.5,-5.31,2.8,1.7,.04,black);
 box('projection screen glow',0,2.5,-5.275,2.5,1.42,.015,mat('#9b7a51'));
 const screenGlow=new THREE.PointLight('#ddb77f',7,5,2);screenGlow.position.set(0,2.7,-4.4);scene.add(screenGlow);
-box('exit door',4.1,1.45,-5.31,1.45,2.9,.14,darkWood,true);box('door inset',4.1,1.5,-5.22,1.13,2.55,.035,wood);
-for(const y of [.42,2.55]) box('door panel',4.1,y,-5.18,1.0,.7,.025,darkWood);
-const knob=new THREE.Mesh(new THREE.SphereGeometry(.075,16,12),brass);knob.position.set(3.64,1.45,-5.08);scene.add(knob);
 
 // Desk, drawer, desk lamp, mixer and turntable.
 box('desk top',-1.6,1.15,-2.1,3.25,.18,1.45,wood);box('desk front',-1.6,.76,-1.5,3.05,.68,.12,darkWood);
 for(const x of [-3,-.2])for(const z of [-2.62,-1.58])box('desk leg',x,.53,z,.14,1.05,.14,darkWood);
-const drawer=box('jammed drawer',-1.6,.92,-1.41,1.08,.37,.13,wood,true);box('drawer face',-1.6,.92,-1.325,.98,.29,.025,darkWood);box('drawer pull',-1.6,.92,-1.28,.17,.035,.055,brass);
+const drawer=box('jammed drawer',-1.6,.92,-1.41,1.08,.37,.13,wood,true);const drawerFace=box('drawer face',-1.6,.92,-1.325,.98,.29,.025,darkWood);box('drawer pull',-1.6,.92,-1.28,.17,.035,.055,brass);
+const drawerKey=box('drawer key',-1.6,1.04,-.91,.38,.055,.06,mat('#f0bd62',.25,.72),true);drawerKey.visible=false;const keyHead=new THREE.Mesh(new THREE.TorusGeometry(.105,.026,10,24),mat('#ffe18a',.22,.7));keyHead.position.set(-1.78,1.04,-.91);keyHead.visible=false;scene.add(keyHead);
+const keyToothA=box('key teeth',-1.43,1.04,-.91,.045,.12,.065,mat('#e7ad4d',.25,.72));const keyToothB=box('key teeth two',-1.36,1.04,-.91,.045,.09,.065,mat('#e7ad4d',.25,.72));keyToothA.visible=false;keyToothB.visible=false;
+const keyMarker=makePickupMarker('TAKE KEY','#ffd36d');keyMarker.position.set(-1.6,1.42,-.91);const keyGlow=new THREE.PointLight('#ffc64e',0,1.8,2);keyGlow.position.set(-1.6,1.25,-.91);scene.add(keyGlow);
 // Mixer panel with tactile faders
 box('mixing console',-2.15,1.28,-2.12,1.2,.12,.82,black,true);
 for(let c=0;c<3;c++){box('channel strip',-2.55+c*.4,1.35,-2.12,.31,.025,.65,mat('#242729'));for(let n=0;n<3;n++){const knobMesh=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.035,16),brass);knobMesh.rotation.x=Math.PI/2;knobMesh.position.set(-2.55+c*.4,1.38,-2.31+n*.17);scene.add(knobMesh)}box('fader slot',-2.55+c*.4,1.38,-1.94,.025,.014,.22,mat('#111'));box('fader cap',-2.55+c*.4,1.4,-2.0,.1,.045,.065,cream)}
 // Turntable platter, record and arm
-box('turntable base',-1.05,1.29,-2.13,1.25,.12,.92,mat('#262523'));
+const turntable=box('turntable',-1.05,1.29,-2.13,1.25,.12,.92,mat('#262523'),true);
 const platter=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.055,48),mat('#77716a',.3,.5));platter.position.set(-1.05,1.38,-2.13);scene.add(platter);
-const record=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.018,64),mat('#141516',.32,.25));record.position.set(-1.05,1.42,-2.13);record.name='record player';scene.add(record);interactables.push(record);
-const label=new THREE.Mesh(new THREE.CircleGeometry(.105,32),mat('#ac603c'));label.rotation.x=-Math.PI/2;label.position.set(-1.05,1.433,-2.13);scene.add(label);
+const record=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.018,64),mat('#11151d',.32,.25));record.position.set(-1.05,1.42,-2.13);record.visible=false;scene.add(record);
+const label=new THREE.Mesh(new THREE.CircleGeometry(.105,32),mat('#1de1ff'));label.rotation.x=-Math.PI/2;label.position.set(-1.05,1.433,-2.13);label.visible=false;scene.add(label);
+const reverseSwitch=box('reverse switch',-.48,1.39,-1.92,.14,.09,.14,magenta,true);
+const reverseLamp=box('reverse lamp',-.2,1.39,-1.92,.08,.07,.08,cyan);
+// Keyed wall safe. Its vinyl is only exposed once the door swings open.
+box('safe interior back',4.31,1.55,-2.8,.1,1.48,1.2,mat('#101a28',.55,.58));
+box('safe shell top',3.88,2.29,-2.8,.9,.1,1.2,mat('#34475b',.32,.62));box('safe shell bottom',3.88,.81,-2.8,.9,.1,1.2,mat('#34475b',.32,.62));
+box('safe shell side one',3.88,1.55,-3.37,.9,1.38,.08,mat('#34475b',.32,.62));box('safe shell side two',3.88,1.55,-2.23,.9,1.38,.08,mat('#34475b',.32,.62));
+const safeDoor=box('safe door',3.39,1.55,-2.8,.09,1.27,1.03,mat('#182433',.25,.72),true);
+box('safe frame upper',3.31,2.25,-2.8,.055,.07,1.17,cyan);box('safe frame lower',3.31,.85,-2.8,.055,.07,1.17,cyan);box('safe frame left',3.31,1.55,-3.35,.055,1.45,.07,cyan);box('safe frame right',3.31,1.55,-2.25,.055,1.45,.07,cyan);
+const safeDial=new THREE.Mesh(new THREE.TorusGeometry(.17,.025,10,28),brass);safeDial.rotation.y=Math.PI/2;safeDial.position.set(3.32,1.55,-2.8);scene.add(safeDial);
+const vinylItem=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,.035,64),mat('#141923',.2,.42));vinylItem.rotation.z=Math.PI/2;vinylItem.position.set(3.73,1.56,-2.8);vinylItem.visible=false;vinylItem.name='safe vinyl';interactables.push(vinylItem);
+const vinylLabel=new THREE.Mesh(new THREE.CircleGeometry(.13,32),mat('#ff66da',.24,.35));vinylLabel.rotation.y=-Math.PI/2;vinylLabel.position.set(3.695,1.56,-2.8);vinylLabel.visible=false;scene.add(vinylLabel);
+const vinylGroove=new THREE.Mesh(new THREE.TorusGeometry(.27,.008,6,48),cyan);vinylGroove.rotation.y=-Math.PI/2;vinylGroove.position.set(3.69,1.56,-2.8);vinylGroove.visible=false;scene.add(vinylGroove);
+const vinylMarker=makePickupMarker('TAKE VINYL','#ff68d7');vinylMarker.position.set(3.72,2.18,-2.8);const vinylGlow=new THREE.PointLight('#ec54ff',0,2.2,2);vinylGlow.position.set(3.5,1.8,-2.8);scene.add(vinylGlow);
 const spindle=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.06,12),brass);spindle.position.set(-1.05,1.45,-2.13);scene.add(spindle);
 const arm=new THREE.Group();arm.position.set(-.55,1.4,-2.45);arm.rotation.y=-.27;scene.add(arm);const armRod=new THREE.Mesh(new THREE.CylinderGeometry(.022,.03,.65,12),brass);armRod.rotation.z=Math.PI/2;armRod.position.x=-.24;arm.add(armRod);
 // Desk lamp
@@ -82,32 +136,136 @@ for(let i=0;i<4;i++)box('poster text',4.728,2.28-i*.09,-1.6,.012,.018,.54,mat('#
 box('chair seat',.35,.75,-.7,.85,.16,.75,mat('#45413a'));box('chair back',.35,1.35,-.34,.85,1.05,.14,mat('#393630'));
 for(const x of [0, .7])for(const z of [-.95,-.45])box('chair leg',x,.35,z,.07,.68,.07,darkWood);
 for(let i=0;i<3;i++){const can=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.28,20),mat(i===1?'#777061':'#544f46',.5,.36));can.position.set(3.25+i*.34,.16,-3.7);scene.add(can)}
+
+// Two more complete rooms extend the booth into a compact neon-lit hallway.
+function buildConnectedRoom(index){
+  const centerZ=-11*index, backZ=centerZ-5.5;
+  box('room floor',0,-.12,centerZ,10,.24,11,mat(index===1?'#132432':'#211a2c',.64,.32));
+  box('room ceiling',0,5,centerZ,10,.2,11,mat('#111722'));
+  box('room left wall',-5,2.5,centerZ,.25,5,11,mat(index===1?'#1c3546':'#33263d'));
+  box('room right wall',5,2.5,centerZ,.25,5,11,mat(index===1?'#263449':'#3a2942'));
+  for(let x=-4.6;x<=4.6;x+=.9)box('neon floor seam',x,.012,centerZ,.012,.012,10.7,mat('#27364a'));
+  box('room cyan sign',-1.8,3.85,backZ+.16,2.7,.09,.08,cyan);
+  box('room magenta sign',1.6,3.62,backZ+.16,2.2,.08,.08,magenta);
+  box('room cyan side strip',-4.82,3.9,centerZ,.04,.04,9.5,cyan);
+  box('room pink side strip',4.82,2.8,centerZ,.04,.04,9.5,magenta);
+  const glow=new THREE.PointLight(index===1?'#20dcff':'#ec54ff',42,15,2);glow.position.set(0,3.6,centerZ);scene.add(glow);
+  const fill=new THREE.PointLight(index===1?'#399dff':'#ff9c53',22,12,2);fill.position.set(index===1?3:-3,2.7,centerZ-2);scene.add(fill);
+  box('room sign backing',-3.35,3.45,backZ+.16,2.75,1.02,.08,black);
+  addRoomSign(index===1?'SIGNAL CONTROL':'AFTERIMAGE ARCHIVE',index===1?'02 / LIVE ROUTING':'03 / FILM STORAGE',index===1?'#20dfff':'#ff68d7',-3.35,3.45,backZ+.21);
+  // A raised equipment plinth gives each room a distinct silhouette and purpose.
+  box(index===1?'signal console':'archive plinth',-1.15,.55,centerZ-1.1,3.1,1.05,1.35,mat(index===1?'#182735':'#261a31',.38,.58));
+  box('plinth cyan edge',-1.15,1.1,centerZ-1.1,3.15,.035,1.4,cyan);
+  box('equipment display',-1.15,1.35,centerZ-1.5,2.3,.38,.08,mat('#172431',.22,.45));
+  for(let i=0;i<5;i++)box('status light',-2+i*.42,1.38,centerZ-1.44,.12,.035,.02,i%2?magenta:cyan);
+  if(index===1){
+    // Twin signal racks, antenna mast, and routed cable trays identify the control room.
+    for(const x of [-3.7,3.35]){
+      box('server rack',x,1.65,centerZ-1.05,.95,3.1,1.05,mat('#172633',.34,.65));
+      box('rack glass',x,1.65,centerZ-.49,.78,2.83,.035,mat('#15334a',.24,.45));
+      for(let row=0;row<7;row++){
+        box('rack module',x,0.48+row*.37,centerZ-.46,.65,.045,.025,mat('#283b4c',.4,.4));
+        box('rack LED',x-.22+(row%3)*.2,.5+row*.37,centerZ-.43,.055,.045,.025,row%2?cyan:magenta);
+      }
+    }
+    box('antenna mast',2.4,3.7,centerZ-3.2,.055,1.4,.055,mat('#a1afbe',.3,.75));
+    box('antenna crossbar',2.4,4.1,centerZ-3.2,.7,.045,.045,cyan);
+    for(let z=centerZ+1.5;z>centerZ-4;z-=1.2)box('cable tray',0,4.55,z,7.8,.06,.22,mat('#36485b',.5,.45));
+  } else {
+    // Archive shelving, labeled canisters, and a bright scanning table distinguish the vault.
+    for(const y of [1.05,2.05,3.05]){
+      box('archive shelf',-3.55,y,centerZ-1.25,1.65,.09,5.8,mat('#69516e',.44,.58));
+      for(let n=0;n<7;n++){
+        const can=new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,.38,16),mat(n%2?'#ae7c52':'#806b9b',.42,.4));
+        can.position.set(-4.12+(n%3)*.48,y+.25,centerZ-3.45+Math.floor(n/3)*.85);scene.add(can);
+      }
+    }
+    box('archive scanner',2.8,.85,centerZ-1.8,2.2,1.5,2.5,mat('#2a2034',.28,.62));
+    box('scanner glass',2.8,1.63,centerZ-1.8,1.72,.035,2.05,mat('#b67a55',.2,.35));
+    box('scanner light',2.8,1.67,centerZ-1.8,.08,.04,1.85,magenta);
+  }
+}
+buildConnectedRoom(1);buildConnectedRoom(2);
+buildDoorway(-16.5,1);box('archive end wall',0,2.5,-27.5,10,5,.25,wall);
 // Dust motes
 const dustGeo=new THREE.BufferGeometry(), dustCount=240, dustPos=new Float32Array(dustCount*3);
 for(let i=0;i<dustCount;i++){dustPos[i*3]=(Math.random()-.5)*8;dustPos[i*3+1]=Math.random()*4;dustPos[i*3+2]=(Math.random()-.5)*9-1}
 dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#d9bd8e',size:.018,transparent:true,opacity:.38}));scene.add(dust);
 
 // First-person look and movement, with a soft body-size boundary around the set.
-let yaw=0,pitch=0,locked=false,started=false,playing=false,drawerOpen=false,hasLens=false,hasRecord=false,doorUnlocked=false;
+let yaw=0,pitch=0,locked=false,started=false,playing=false,drawerOpen=false,hasKey=false,safeOpen=false,hasVinyl=false,vinylPlaced=false,reversePlayback=false,codeRevealed=false,doorPuzzleUnlocked=false,roomIndex=0;
 const keys=new Set(), raycaster=new THREE.Raycaster();
 const startScreen=document.querySelector('#start-screen'), prompt=document.querySelector('#interaction'), promptLabel=document.querySelector('#interaction-label'), toast=document.querySelector('#toast');
-const objective=document.querySelector('#objective-text'),progressCount=document.querySelector('#progress-count'),progressFill=document.querySelector('#progress-fill');
+const objective=document.querySelector('#objective-text'),progressCount=document.querySelector('#progress-count'),progressFill=document.querySelector('#progress-fill'),recordLabel=document.querySelector('#record-label');
 function showToast(message){toast.textContent=message;toast.classList.add('visible');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.remove('visible'),2300)}
-function updateProgress(){let count=(playing?1:0)+(hasLens?1:0)+(doorUnlocked?1:0);progressCount.textContent=`${String(count).padStart(2,'0')} / 04`;progressFill.style.width=`${count*25}%`;objective.textContent=doorUnlocked?'The booth is open. Step through.':hasLens?'The lens fits the camera. Find the booth door.':playing?'The bass is shaking something loose…':'Find a way into the desk drawer'};}
+const roomTitles=['THE MUSIC ROOM','SIGNAL CONTROL','AFTERIMAGE ARCHIVE'];
+const roomDetails=['01 / TURNTABLE + TAPE','02 / LIVE ROUTING','03 / FILM STORAGE'];
+function setRoomLabel(){const number=`ROOM ${String(roomIndex+1).padStart(2,'0')}`;document.querySelector('#room-number').textContent=number;document.querySelector('#room-title').textContent=roomTitles[roomIndex]||'UNMAPPED ROOM';document.querySelector('#room-marker-name').textContent=roomTitles[roomIndex];document.querySelector('#room-marker-detail').textContent=roomDetails[roomIndex];for(let i=0;i<3;i++){const node=document.querySelector(`#route-node-${i}`);node.classList.toggle('active',i===roomIndex);node.classList.toggle('visited',i<roomIndex);}}
+function updateProgress(){progressCount.textContent=`${String(roomIndex+1).padStart(2,'0')} / 03`;progressFill.style.width=`${((roomIndex+1)/3)*100}%`;if(roomIndex!==0){objective.textContent=roomIndex===2?'Use the magenta door to return through the room chain.':'Explore Signal Control.';return}objective.textContent=!drawerOpen?'Open the desk drawer and look inside.':!hasKey?'Take the brass key from the drawer.':!safeOpen?'Use the key on the wall safe.':!(hasVinyl||vinylPlaced)?'Collect the vinyl from the safe.':!vinylPlaced?'Place the vinyl on the turntable.':!codeRevealed?'Play the track in reverse to reveal the code.':!doorPuzzleUnlocked?'Enter 6767 on the door keypad.':'Walk through the unlocked cyan door.';}
+function openDoor(door){if(door.boundary===-5.5&&!doorPuzzleUnlocked){showToast('The exit is locked. Find the vinyl code and enter it at the keypad.');return}if(!door.isOpen){door.isOpen=true;door.mesh.rotation.y=Math.PI/2;showToast('Door swung open. Walk through it.');}else showToast('Door is open. Walk through.');}
+function syncRoomIndex(){const next=camera.position.z>-5.5?0:camera.position.z>-16.5?1:2;if(next!==roomIndex){roomIndex=next;setRoomLabel();updateProgress();showToast(`Entered ${roomTitles[roomIndex]}.`);}}
 function begin(){started=true;startScreen.classList.add('hidden');canvas.requestPointerLock?.()}
 document.querySelector('#start-button').addEventListener('click',begin);
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===canvas});
 document.addEventListener('mousemove',e=>{if(!locked)return;yaw-=e.movementX*.0022;pitch-=e.movementY*.0019;pitch=THREE.MathUtils.clamp(pitch,-1.1,1.1)});
-document.addEventListener('keydown',e=>{keys.add(e.code);if(e.code==='Escape'&&started&&!locked)canvas.requestPointerLock?.();if(e.code==='KeyE')interact()});document.addEventListener('keyup',e=>keys.delete(e.code));
+const keypadOverlay=document.querySelector('#keypad-overlay'),keypadInput=document.querySelector('#keypad-input'),keypadHint=document.querySelector('#keypad-hint');
+function openKeypad(){keypadInput.value='';keypadHint.textContent=codeRevealed?'The reversed groove reads 6767. Enter the signal.':'The display is blank. The record player may reveal the signal.';keypadOverlay.hidden=false;document.exitPointerLock?.();}
+function closeKeypad(){keypadOverlay.hidden=true;if(started)canvas.requestPointerLock?.();}
+function submitKeypad(){if(!codeRevealed){keypadHint.textContent='Play the vinyl in reverse to reveal the four digits.';return}if(keypadInput.value!=='6767'){keypadHint.textContent='Incorrect sequence. Listen to the reversed track again.';return}doorPuzzleUnlocked=true;keypadOverlay.hidden=true;updateProgress();openDoor(roomDoorObjects[0]);canvas.requestPointerLock?.();}
+keypadOverlay.addEventListener('click',e=>{const key=e.target.closest('[data-key]');if(!key)return;if(key.dataset.key==='clear')keypadInput.value='';else if(key.dataset.key==='back')keypadInput.value=keypadInput.value.slice(0,-1);else if(keypadInput.value.length<4)keypadInput.value+=key.dataset.key;});
+document.querySelector('#keypad-submit').addEventListener('click',submitKeypad);document.querySelector('#keypad-close').addEventListener('click',closeKeypad);
+document.addEventListener('keydown',e=>{if(!keypadOverlay.hidden){if(/^Digit[0-9]$/.test(e.code)&&keypadInput.value.length<4)keypadInput.value+=e.key;else if(e.code==='Backspace')keypadInput.value=keypadInput.value.slice(0,-1);else if(e.code==='Enter')submitKeypad();else if(e.code==='Escape')closeKeypad();e.preventDefault();return}keys.add(e.code);if(e.code==='Escape'&&started&&!locked)canvas.requestPointerLock?.();if(e.code==='KeyE')interact()});document.addEventListener('keyup',e=>keys.delete(e.code));
 canvas.addEventListener('click',()=>{if(started&&!locked)canvas.requestPointerLock?.()});
 const soundButton=document.querySelector('#sound-toggle');let soundOn=true;
 soundButton.addEventListener('click',()=>{soundOn=!soundOn;document.querySelector('#sound-label').textContent=soundOn?'SOUND ON':'SOUND OFF';if(!soundOn)stopTone();else if(playing)startTone()});
-let audioContext=null,oscillators=[];
-function startTone(){if(!soundOn)return;try{audioContext??=new (window.AudioContext||window.webkitAudioContext)();audioContext.resume();if(oscillators.length)return;for(const [frequency,gain] of [[55,.035],[82.4,.018]]){const osc=audioContext.createOscillator(),amp=audioContext.createGain();osc.type='sawtooth';osc.frequency.value=frequency;amp.gain.value=gain;osc.connect(amp).connect(audioContext.destination);osc.start();oscillators.push(osc)}}catch{}}
-function stopTone(){for(const osc of oscillators){try{osc.stop()}catch{}}oscillators=[]}
-function nearest(){camera.rotation.set(pitch,yaw,0,'YXZ');raycaster.setFromCamera(new THREE.Vector2(0,0),camera);const hits=raycaster.intersectObjects(interactables,false);return hits.length&&hits[0].distance<2.5?hits[0].object:null}
-function interact(){const hit=nearest();if(!hit)return;switch(hit.name){case'jammed drawer':if(!playing){showToast('The drawer is jammed. Something needs to shake it loose.');break}if(!drawerOpen){drawerOpen=true;drawer.position.z=-1.66;hasLens=true;showToast('The bass rattles the drawer open. A camera lens.')}else showToast('The drawer is already open.');break;case'record player':playing=!playing;record.material.color.set(playing?'#542c21':'#141516');recordLabel.classList.toggle('visible',playing);if(playing){startTone();showToast('Needle down. The bass fills the booth.')}else{stopTone();showToast('The record falls silent.')}break;case'film canister':if(!hasRecord){hasRecord=true;hit.material.color.set('#242424');showToast('A reel canister. The label reads: LOW FREQUENCY.')}else showToast('An empty film canister.');break;case'exit door':if(!doorUnlocked){if(hasLens){doorUnlocked=true;knob.material.color.set('#e2ba83');showToast('The lens catches the projector beam. The booth door clicks open.')}else showToast('The door is locked. Find the camera lens first.')}else showToast('The projection booth is waiting.');break;case'mixing console':showToast('Three channels. A low signal is already humming.');break;default:showToast('Dust, warm metal, and old film.');}}
-function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.04);camera.rotation.set(pitch,yaw,0,'YXZ');const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));let move=new THREE.Vector3();if(keys.has('KeyW'))move.add(forward);if(keys.has('KeyS'))move.sub(forward);if(keys.has('KeyD'))move.add(right);if(keys.has('KeyA'))move.sub(right);if(move.lengthSq()){move.normalize().multiplyScalar(dt*(keys.has('ShiftLeft')?3.6:2.3));camera.position.add(move);camera.position.x=THREE.MathUtils.clamp(camera.position.x,-4.55,4.55);camera.position.z=THREE.MathUtils.clamp(camera.position.z,-5.03,5.05)}camera.position.y=1.62;const target=nearest();prompt.classList.toggle('visible',!!target);if(target){const names={'jammed drawer':'OPEN DRAWER','record player':playing?'STOP RECORD':'PLAY RECORD','film canister':'TAKE CANISTER','exit door':doorUnlocked?'ENTER BOOTH':'CHECK DOOR','mixing console':'INSPECT MIXER'};promptLabel.textContent=names[target.name]||'INSPECT'}if(playing)record.rotation.y+=dt*1.8;dust.rotation.y+=dt*.008;renderer.render(scene,camera)}
+let audioContext=null,audioSource=null,audioGain=null;
+function makeTrackBuffer(reverse){const rate=audioContext.sampleRate,length=rate*3,buffer=audioContext.createBuffer(1,length,rate),samples=buffer.getChannelData(0),notes=[55,65.4,73.4,82.4,73.4,65.4,55,82.4],step=3/notes.length;for(let i=0;i<length;i++){const time=i/rate,index=Math.floor(time/step),local=time%step,env=Math.min(1,local*16)*Math.min(1,(step-local)*9),f=notes[index];samples[i]=(.24*Math.sin(2*Math.PI*f*local)+.08*Math.sin(2*Math.PI*f*2*local))*env;}if(reverse)samples.reverse();return buffer;}
+function startTone(){if(!soundOn)return;try{audioContext??=new(window.AudioContext||window.webkitAudioContext)();audioContext.resume();stopTone();audioGain??=audioContext.createGain();audioGain.gain.value=.34;audioGain.connect(audioContext.destination);audioSource=audioContext.createBufferSource();audioSource.buffer=makeTrackBuffer(reversePlayback);audioSource.loop=true;audioSource.connect(audioGain);audioSource.start();}catch{}}
+function stopTone(){if(audioSource){try{audioSource.stop()}catch{}audioSource.disconnect();audioSource=null;}}
+function updateRecordLabel(){recordLabel.classList.toggle('visible',playing||codeRevealed);recordLabel.querySelector('span').textContent=codeRevealed?'REVERSE SIGNAL DECODED':reversePlayback?'REVERSE PLAYBACK':'FORWARD PLAYBACK';recordLabel.querySelector('strong').textContent=codeRevealed?'6767':reversePlayback?'REWIND':'—';}
+function nearest(){camera.rotation.set(pitch,yaw,0,'YXZ');if(safeOpen&&!hasVinyl&&camera.position.distanceTo(vinylItem.position)<2.2)return vinylItem;raycaster.setFromCamera(new THREE.Vector2(0,0),camera);const hits=raycaster.intersectObjects(interactables,false).filter(hit=>hit.object.visible);return hits.length&&hits[0].distance<2.5?hits[0].object:null}
+function interact(){
+  const hit=nearest();if(!hit)return;
+  const passage=roomDoorObjects.find(door=>door.mesh===hit);if(passage){openDoor(passage);return;}
+  switch(hit.name){
+    case'jammed drawer':if(!drawerOpen){drawerOpen=true;drawer.position.z=-1.15;drawerFace.position.z=-1.06;drawerKey.visible=true;keyHead.visible=true;keyToothA.visible=true;keyToothB.visible=true;keyMarker.visible=true;keyGlow.intensity=4;showToast('Drawer open — the brass key is glowing inside. Aim at it and press E.');}else showToast(hasKey?'The drawer is empty.':'The brass key is inside the open drawer.');break;
+    case'drawer key':if(!drawerOpen){showToast('Open the drawer first.');break}hasKey=true;drawerKey.visible=false;keyHead.visible=false;keyToothA.visible=false;keyToothB.visible=false;keyMarker.visible=false;keyGlow.intensity=0;showToast('Brass key collected. The cyan outline on the wall marks the safe.');break;
+    case'safe door':if(!hasKey){showToast('The safe is locked. Look in the open desk drawer for the brass key.');break}if(!safeOpen){safeOpen=true;safeDoor.visible=false;safeDial.visible=false;vinylItem.visible=true;vinylLabel.visible=true;vinylGroove.visible=true;vinylMarker.visible=true;vinylGlow.intensity=5;showToast('Safe open — the pink vinyl is mounted inside. Aim at it and press E.');}else showToast(hasVinyl?'The safe is open.':'Take the vinyl from the safe.');break;
+    case'safe vinyl':if(!safeOpen){showToast('The safe is still locked.');break}hasVinyl=true;vinylItem.visible=false;vinylLabel.visible=false;vinylGroove.visible=false;vinylMarker.visible=false;vinylGlow.intensity=0;showToast('Vinyl collected. Place it on the turntable on the desk.');break;
+    case'turntable':if(!vinylPlaced){if(!hasVinyl){showToast('The platter is empty. Find the vinyl in the safe.');break}vinylPlaced=true;record.visible=true;label.visible=true;hasVinyl=false;showToast('Vinyl placed. The reverse switch is beside the platter.');}
+      else{playing=!playing;if(playing){startTone();if(reversePlayback){codeRevealed=true;showToast('The reversed groove resolves into 6767.');}else showToast('Needle down. The forward track is distorted.')}else{stopTone();showToast('Playback paused.')}updateRecordLabel();}break;
+    case'reverse switch':if(!vinylPlaced){showToast('Place the vinyl on the turntable first.');break}reversePlayback=!reversePlayback;reverseLamp.material=reversePlayback?magenta:cyan;if(playing){startTone();if(reversePlayback){codeRevealed=true;showToast('Reverse playback reveals 6767.');}else showToast('Forward playback restored.');}else showToast(reversePlayback?'Playback direction set to reverse.':'Playback direction set to forward.');updateRecordLabel();break;
+    case'room keypad':openKeypad();break;
+    case'mixing console':showToast('Three channels. The bass stem is isolated.');break;
+    default:showToast('A piece of the old booth.');
+  }
+  updateProgress();
+}
+function tick(){
+  requestAnimationFrame(tick);
+  const dt=Math.min(clock.getDelta(),.04),previousZ=camera.position.z;
+  camera.rotation.set(pitch,yaw,0,'YXZ');
+  const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+  const move=new THREE.Vector3();
+  if(keys.has('KeyW'))move.add(forward);if(keys.has('KeyS'))move.sub(forward);if(keys.has('KeyD'))move.add(right);if(keys.has('KeyA'))move.sub(right);
+  if(move.lengthSq()){
+    move.normalize().multiplyScalar(dt*(keys.has('ShiftLeft')?3.6:2.3));
+    const blockedBySafe=(x,z)=>x>3.1&&x<4.7&&z>-3.68&&z<-1.92;
+    const nextX=THREE.MathUtils.clamp(camera.position.x+move.x,-4.55,4.55);
+    if(!blockedBySafe(nextX,camera.position.z))camera.position.x=nextX;
+    const nextZ=THREE.MathUtils.clamp(camera.position.z+move.z,-27.03,5.05);
+    if(!blockedBySafe(camera.position.x,nextZ))camera.position.z=nextZ;
+    for(const door of roomDoorObjects){
+      const crossed=(previousZ>door.boundary&&camera.position.z<=door.boundary)||(previousZ<door.boundary&&camera.position.z>=door.boundary);
+      if(crossed&&(!door.isOpen||Math.abs(camera.position.x-4.02)>.95))camera.position.z=previousZ>door.boundary?door.boundary+.45:door.boundary-.45;
+    }
+  }
+  camera.position.y=1.62;syncRoomIndex();
+  const target=nearest();prompt.classList.toggle('visible',!!target);
+  if(target){const door=roomDoorObjects.find(item=>item.mesh===target);const names={'jammed drawer':drawerOpen?'TAKE KEY':'OPEN DRAWER','drawer key':'TAKE BRASS KEY','safe door':hasKey?'UNLOCK SAFE':'SAFE — KEY REQUIRED','safe vinyl':'TAKE VINYL','turntable':vinylPlaced?(playing?'STOP RECORD':'PLAY RECORD'):hasVinyl?'PLACE VINYL':'TURNTABLE — NO RECORD','reverse switch':`REVERSE: ${reversePlayback?'ON':'OFF'}`,'room keypad':'ENTER ACCESS CODE','mixing console':'INSPECT MIXER'};promptLabel.textContent=door?(door.isOpen?'WALK THROUGH DOOR':camera.position.z>door.boundary?'E OPEN CYAN DOOR':'E OPEN MAGENTA RETURN'):(names[target.name]||'INSPECT');}
+  if(playing)record.rotation.y+=dt*1.8;if(keyMarker.visible)keyMarker.position.y=1.42+Math.sin(clock.elapsedTime*2.4)*.035;if(vinylMarker.visible)vinylMarker.position.y=2.18+Math.sin(clock.elapsedTime*2.1)*.045;dust.rotation.y+=dt*.008;renderer.render(scene,camera);
+}
 const clock=new THREE.Clock();tick();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.75))});
 updateProgress();
+setRoomLabel();
