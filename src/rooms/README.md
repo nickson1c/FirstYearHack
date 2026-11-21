@@ -1,6 +1,6 @@
 # Room module ownership
 
-Each `room-0X.js` file is the home for that room's title, route range, accent color, local Three.js decorations, and puzzle interaction rules. `index.js` is the ordered route registry; keep its order aligned with the room numbers in the UI. `shared.js` contains helpers used by more than one room.
+Each `room-0X.js` file is the home for that room's title, route range, accent color, local decorations, and puzzle interaction rules. `index.js` is the ordered route registry; keep its order aligned with the room numbers in the UI. `shared.js` contains helpers used by more than one room.
 
 ## Collaborating without file conflicts
 
