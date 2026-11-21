@@ -93,7 +93,7 @@ const keys=new Set(), raycaster=new THREE.Raycaster();
 const startScreen=document.querySelector('#start-screen'), prompt=document.querySelector('#interaction'), promptLabel=document.querySelector('#interaction-label'), toast=document.querySelector('#toast');
 const objective=document.querySelector('#objective-text'),progressCount=document.querySelector('#progress-count'),progressFill=document.querySelector('#progress-fill');
 function showToast(message){toast.textContent=message;toast.classList.add('visible');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.remove('visible'),2300)}
-function updateProgress(){let count=(playing?1:0)+(hasLens?1:0)+(doorUnlocked?1:0);progressCount.textContent=`${String(count).padStart(2,'0')} / 04`;progressFill.style.width=`${count*25}%`;objective.textContent=doorUnlocked?'The booth is open. Step through.':hasLens?'The lens fits the camera. Find the booth door.':playing?'The bass is shaking something loose…':'Find a way into the desk drawer'};}
+function updateProgress(){let count=(playing?1:0)+(hasLens?1:0)+(doorUnlocked?1:0);progressCount.textContent=`${String(count).padStart(2,'0')} / 04`;progressFill.style.width=`${count*25}%`;objective.textContent=doorUnlocked?'The booth is open. Step through.':hasLens?'The lens fits the camera. Find the booth door.':playing?'The bass is shaking something loose…':'Find a way into the desk drawer'};
 function begin(){started=true;startScreen.classList.add('hidden');canvas.requestPointerLock?.()}
 document.querySelector('#start-button').addEventListener('click',begin);
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===canvas});
